@@ -6,6 +6,8 @@ import { Estudiante } from "./Estudiante.js";
 import { Curso } from "./Curso.js";
 import { Horario } from "./Horario.js";
 import { Rangos } from "./Rangos.js";
+import { Universidad } from "./Universidad.js";
+import { Carrera } from "./Carrera.js";
 
 export const Cita = sequelize.define(
     "Cita", {
@@ -74,6 +76,26 @@ Cita .belongsTo(Rangos,{
 
 Rangos .hasMany(Cita,{
     foreignKey : "rangoId",
+    sourceKey : "id"
+})
+
+Cita .belongsTo(Carrera,{
+    foreignKey : "carreraId",
+    targetKey : "id"
+})
+
+Carrera .hasMany(Cita,{
+    foreignKey : "carreraId",
+    sourceKey : "id"
+})
+
+Cita .belongsTo(Universidad,{
+    foreignKey : "universidadId",
+    targetKey : "id"
+})
+
+Universidad .hasMany(Cita,{
+    foreignKey : "universidadId",
     sourceKey : "id"
 })
 
