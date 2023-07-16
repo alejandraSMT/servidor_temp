@@ -20,23 +20,6 @@ VALUES ('Ingeniería Civil'),
        ('Derecho'),
        ('Arquitectura');
 
-
-INSERT INTO "Rangos" ("horaInicio", "horaFin")
-VALUES ('08:00', '09:00'),
-       ('09:00', '10:00'),
-       ('10:00', '11:00'),
-       ('11:00', '12:00'),
-       ('12:00', '13:00'),
-       ('13:00', '14:00'),
-       ('14:00', '15:00'),
-       ('15:00', '16:00'),
-       ('16:00', '17:00'),
-       ('17:00', '18:00'),
-       ('18:00', '19:00'),
-       ('19:00', '20:00'),
-       ('20:00', '21:00');
-
-
 INSERT INTO "UniCarrera" ("universidadId", "carreraId")
 VALUES (1, 1),
        (1, 2),
@@ -65,8 +48,3 @@ VALUES (1, 1),
        (4, 3),
        (5, 1),
        (5, 4);
-
-INSERT INTO "TipoDocumento" ("nombreCategoria")
-VALUES('DNI'),
-      ('Carné de extranjería'),
-      ('Pasaporte')

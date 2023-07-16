@@ -16,9 +16,6 @@ import { Curso } from "./models/Curso.js";
 import { UsuarioCurso } from "./models/UsuarioCurso.js";
 import { Horario } from "./models/Horario.js";
 import { Cita } from "./models/Citas.js";
-import { Rangos } from "./models/Rangos.js";
-import { Calificacion } from "./models/Calificacion.js";
-import { TipoDocumento} from "./models/TipoDocumento.js";
 
 const app = express();
 const port = process.env.PORT || 3005;
@@ -52,7 +49,7 @@ app.get("/", function (req, res) {
   verificarConexion();
 });
 
-app.get("/prueba", async (req, res) => {
+/*app.get("/prueba", async (req, res) => {
 
   const rangos = await Rangos.create({
     horaInicio : "9:00",
@@ -182,7 +179,7 @@ app.get("/prueba", async (req, res) => {
     profesorId : profesor1.dataValues.id
   })
 
-  /*const horarioProfe1 = await ProfesorHorario.create({
+  const horarioProfe1 = await ProfesorHorario.create({
     profesorId: profesor1.dataValues.id,
     horarioId: horario.dataValues.id,
   });
@@ -190,7 +187,7 @@ app.get("/prueba", async (req, res) => {
   const horarioProfe2 = await ProfesorHorario.create({
     profesorId: profesor2.dataValues.id,
     horarioId: horario.dataValues.id,
-  });*/
+  });
 
   const cita1 = await Cita.create({
     profesorId: profesor1.dataValues.id,
@@ -301,7 +298,7 @@ app.get("/prueba", async (req, res) => {
       queProBonito: queProXD
     })
   );
-});
+});*/
 
 app.listen(port, function () {
   console.log("Servidor ejecutándose en puerto " + port);

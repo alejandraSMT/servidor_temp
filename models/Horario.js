@@ -1,6 +1,5 @@
 import { DataTypes } from "sequelize";
 import { sequelize } from "../database/database.js";
-import { Rangos } from "./Rangos.js";
 import { Profesor } from "./Profesor.js";
 
 export const Horario = sequelize.define(
@@ -13,14 +12,12 @@ export const Horario = sequelize.define(
         diaSemana: {
             type: DataTypes.STRING
         },
+        // formato 24 hrs
         horaInicio: {
-            type: DataTypes.STRING,
-            /*get() {
-                return moment(this.getDataValue('horaInicio')).format('h:mm');
-            }*/
+            type: DataTypes.INTEGER
         },
         horaFin: {
-            type: DataTypes.STRING,
+            type: DataTypes.INTEGER,
         },
         enlaceSesion: {
             type: DataTypes.STRING
@@ -38,15 +35,5 @@ Horario .belongsTo(Profesor,{
 
 Profesor .hasMany(Horario,{
     foreignKey : "profesorId",
-    targetKey : "id"
-})
-
-Horario .belongsTo(Rangos,{
-    foreignKey : "rangoId",
-    sourceKey: "id"
-})
-
-Rangos .hasMany(Horario,{
-    foreignKey: "rangoId",
     targetKey : "id"
 })

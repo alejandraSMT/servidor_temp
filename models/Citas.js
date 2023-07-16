@@ -5,7 +5,6 @@ import { Profesor } from "./Profesor.js";
 import { Estudiante } from "./Estudiante.js";
 import { Curso } from "./Curso.js";
 import { Horario } from "./Horario.js";
-import { Rangos } from "./Rangos.js";
 import { Universidad } from "./Universidad.js";
 import { Carrera } from "./Carrera.js";
 
@@ -22,10 +21,19 @@ export const Cita = sequelize.define(
         comentario: {
             type: DataTypes.STRING
         },
-        fecha:{
-            type : DataTypes.STRING
+        dia:{
+            type : DataTypes.INTEGER
+        },
+        mes:{
+            type : DataTypes.INTEGER
+        },
+        anio:{
+            type : DataTypes.INTEGER
         },
         hora:{
+            type : DataTypes.INTEGER
+        },
+        diaSemana:{
             type : DataTypes.STRING
         },
         status:{
@@ -69,16 +77,6 @@ Curso .hasMany(Cita, {
     targetKey: "id"
 })
 
-Cita .belongsTo(Rangos,{
-    foreignKey : "rangoId",
-    targetKey : "id"
-})
-
-Rangos .hasMany(Cita,{
-    foreignKey : "rangoId",
-    sourceKey : "id"
-})
-
 Cita .belongsTo(Carrera,{
     foreignKey : "carreraId",
     targetKey : "id"
@@ -86,16 +84,6 @@ Cita .belongsTo(Carrera,{
 
 Carrera .hasMany(Cita,{
     foreignKey : "carreraId",
-    sourceKey : "id"
-})
-
-Cita .belongsTo(Universidad,{
-    foreignKey : "universidadId",
-    targetKey : "id"
-})
-
-Universidad .hasMany(Cita,{
-    foreignKey : "universidadId",
     sourceKey : "id"
 })
 

@@ -12,6 +12,7 @@ export const Usuario = sequelize.define(
             primaryKey: true,
             autoIncrement: true
         },
+        // unico ejem: wonwonderful
         nombreUsuario: {
             type: DataTypes.STRING,
             unique : true
@@ -25,21 +26,32 @@ export const Usuario = sequelize.define(
             allowNull: false,
             unique: true
         },
+        // Alejandra
         nombres: {
             type: DataTypes.STRING,
             allowNull: false
         },
+        // San Martin
         apellidos: {
             type: DataTypes.STRING,
             allowNull: false
         },
-
+        // alejandrasanmartin o Alejandra San Martin o ALEJANDRA SAN MARTIN o alejandra san martin
+        nombreCompleto: {
+            type: DataTypes.STRING,
+        },
         nroDocumento: {
             type: DataTypes.STRING,
             allowNull: false
         },
-        rol: {
+        tipoDocumento: {
             type: DataTypes.STRING,
+            allowNull: false
+        },
+        rol: {
+            // 0 -> estudiante
+            // 1 -> profesor
+            type: DataTypes.INTEGER,
             allowNull: false
         },
         tituloPerfil: {
@@ -48,13 +60,9 @@ export const Usuario = sequelize.define(
         presenPerfil: {
             type: DataTypes.STRING
         },
-        nombreRango : {
-            type: DataTypes.STRING
-        },
         imgPerfil: {
             type: DataTypes.STRING
         }
-
     }, {
         freezeTableName: true,
         timestamps : false
