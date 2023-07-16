@@ -18,9 +18,12 @@ import { Horario } from "./models/Horario.js";
 import { Cita } from "./models/Citas.js";
 
 const app = express();
-const port = process.env.PORT || 3005;
+const port = process.env.PORT || 3001;
 
-app.use(cors());
+app.use(cors({
+  origin : "http://localhost:3000",
+  optionsSuccessStatus:200
+}))
 
 app.use(express.json());
 
@@ -34,271 +37,196 @@ async function verificarConexion() {
   }
 }
 
-app.get("/create-user", async function (req, res) {
-  const nuevoUsuario = await Usuario.create({
-    nombre: "Pepe",
-    codigo: "20123254",
-    edad: 30,
-  });
 
-  res.send("Usuario creado.");
+// Obtener la información completa del profesor personal y sus cursos
+app.get('/obtener-profesor-total/:usuarioId', async function(req, res) {
+  const usuarioId = req.params.usuarioId;
+
+  try {
+    const usuario = await Usuario.findOne({
+      where: {
+        id: usuarioId,
+        rol: "1"
+      },
+      attributes: ["nombreCompleto", "correo", "apellidos", "tituloPerfil", "presenPerfil", "imgPerfil"],
+      include: {
+        model: UsuarioCurso,
+        include: {
+          model: Curso,
+          attributes: ["nombreCurso"]
+        }
+      }
+    });
+
+    if (!usuario) {
+      return res.status(404).json({ error: "Profesor no encontrado" });
+    }
+
+    console.log(usuario);
+    res.send(usuario);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Error al obtener el profesor" });
+  }
 });
+
+
 
 app.get("/", function (req, res) {
   res.send("Se conectó correctamente");
   verificarConexion();
 });
 
-/*app.get("/prueba", async (req, res) => {
+/* solo son ejemplo de un endpoint basico
 
-  const rangos = await Rangos.create({
-    horaInicio : "9:00",
-    horaFin : "10:00",
-  })
+app.get("/obtener-cursos", async (req, res) => {
+  try {
+    const cursos = await Curso.findAll();
+    res.json(cursos);
+  } catch (error) {
+    console.error(error);
+    res.status(500).send("Error al obtener la lista de cursos.");
+  }
+});
 
-  const rangos1 = await Rangos.create({
-    horaInicio : "10:00",
-    horaFin : "11:00"
-  })
-
-  const universidadPrueba = await Universidad.create({
-    nombreUniversidad: "ULIMA",
-  });
-
-  const carreraPrueba = await Carrera.create({
-    nombreCarrera: "Sistemas",
-  });
-
-  const uniCursoPrueba = await UniCarrera.create({
-    carreraId: carreraPrueba.dataValues.id,
-    universidadId: universidadPrueba.dataValues.id,
-  });
-
-  const cursoPrueba = await Curso.create({
-    nombreCurso: "Progra web",
-  });
-
-  const cursoPrueba2 = await Curso.create({
-    nombreCurso: "Progra web2",
-  });
-
-  const carreraCursoPrueba = await CarreraCurso.create({
-    carreraId: carreraPrueba.dataValues.id,
-    cursoId: cursoPrueba.dataValues.id,
-  });
-
-  const carreraCursoPrueba2 = await CarreraCurso.create({
-    carreraId: carreraPrueba.dataValues.id,
-    cursoId: cursoPrueba2.dataValues.id,
-  });
-
-  const usuarioDummyAlumno = await Usuario.create({
-    nombreUsuario: "Jose",
-    password: "123",
-    correo: "xd@xd1",
-    nombres: "Jose",
-    apellidos: "jose",
-    tipoDocumento: "a",
-    nroDocumento: "xd",
-    rol: "Estudiante",
-    carreraId: carreraCursoPrueba.dataValues.id,
-  });
-
-  const usuarioDummyProfesor = await Usuario.create({
-    nombreUsuario: "Hernan",
-    password: "123",
-    correo: "xd@xd3",
-    nombres: "Jose",
-    apellidos: "jose",
-    tipoDocumento: "a",
-    nroDocumento: "xd",
-    rol: "Profesor",
-    carreraId: carreraCursoPrueba.dataValues.id,
-  });
-
-  const usuarioDummyProfesor2 = await Usuario.create({
-    nombreUsuario: "Pablito",
-    password: "123",
-    correo: "xd@xd4",
-    nombres: "Pablo",
-    apellidos: "jose",
-    tipoDocumento: "a",
-    nroDocumento: "xd",
-    rol: "Profesor",
-    carreraId: carreraCursoPrueba.dataValues.id,
-  });
-
-  const profesor1 = await Profesor.create({
-    usuarioId: usuarioDummyProfesor.dataValues.id,
-  });
-
-  const profesor2 = await Profesor.create({
-    usuarioId: usuarioDummyProfesor2.dataValues.id
-  });
-
-  const usuarioCursoEstudiante = await UsuarioCurso.create({
-    usuarioId: usuarioDummyAlumno.dataValues.id,
-    cursoId: cursoPrueba.dataValues.id,
-  });
-
-  const usuarioCursoProfesor = await UsuarioCurso.create({
-    usuarioId: usuarioDummyProfesor.dataValues.id,
-    cursoId: cursoPrueba.dataValues.id,
-  });
-
-  const usuarioCursoProfesor2 = await UsuarioCurso.create({
-    usuarioId: usuarioDummyProfesor2.dataValues.id,
-    cursoId: cursoPrueba.dataValues.id,
-  });
-
-  const estudiante1 = await Estudiante.create({
-    usuarioId: usuarioDummyAlumno.dataValues.id,
-  });
+app.get("/obtener-usuarios", async(req,res)=>{
+  try{
+    const usuarios = await Usuario.findAll();
+    res.json(usuarios);
+  } catch ( error){
+    console.error(error);
+    res.status(500).send("Error al obtener la lista de usuarios");
+  }
+});
+*/
 
 
-  const horario = await Horario.create({
-    diaSemana: "Lunes",
-    horaInicio: "8",
-    horaFin: "10",
-    enlaceSesion: "Zoom",
-  });
 
-  const horariouwu = await Horario.create({
-    diaSemana : "Lunes",
-    horaInicio : "9:00",
-    horaFin :"11:00",
-    rangoId : rangos.dataValues.id,
-    profesorId : profesor1.dataValues.id
-  })
+app.post('/delete-cita/:citaId', async function(req, res) {
+  const citaId = req.params.citaId;
 
-  const horariouwu1 = await Horario.create({
-    diaSemana : "Lunes",
-    horaInicio : "9:00",
-    horaFin :"11:00",
-    rangoId : rangos1.dataValues.id,
-    profesorId : profesor1.dataValues.id
-  })
+  try {
+    // Busca el usuario a eliminar
+    const cita = await Cita.findOne({
+      where: {
+        id: citaId,
+        status: 0 //pendiente es 0, 1 es pasada. Calificacion del 1 al 5
+      }
+    });
 
-  const horarioProfe1 = await ProfesorHorario.create({
-    profesorId: profesor1.dataValues.id,
-    horarioId: horario.dataValues.id,
-  });
-
-  const horarioProfe2 = await ProfesorHorario.create({
-    profesorId: profesor2.dataValues.id,
-    horarioId: horario.dataValues.id,
-  });
-
-  const cita1 = await Cita.create({
-    profesorId: profesor1.dataValues.id,
-    estudianteId: estudiante1.dataValues.id,
-    cursoId: cursoPrueba.dataValues.id,
-    rangoId : rangos.dataValues.id
-  });
-
-  const cita2 = await Cita.create({
-    profesorId: profesor2.dataValues.id,
-    estudianteId: estudiante1.dataValues.id,
-    cursoId: cursoPrueba2.dataValues.id,
-  });
-
-  //Esto te devuelve el objeto del estudiante con sus citas
-  const citasAlumnoPrueba = await Estudiante.findAll({
-    where: {
-      id: estudiante1.dataValues.id,
-    },
-    include: Cita,
-  });
-
-  //Hace lo mismo pero con atributos en especifico
-  const citasAlumnoPrueba2 = await Estudiante.findAll({
-    where: {
-      id: estudiante1.dataValues.id,
-    },
-    include: {
-      model: Cita,
-      attributes: ["estudianteId", "profesorId", "cursoId"],
-    },
-  });
-
-  //Devuelve solo las citas dado un id de alumno
-  const onlyCitasAlumnos = await Cita.findAll({
-    where: {
-      estudianteId: estudiante1.dataValues.id,
-    },
-  });
-
-  //Misma vaina pero solo los atributos que tu quieres
-  const onlyCitasAlumnos2 = await Cita.findAll({
-    where: {
-      estudianteId: estudiante1.dataValues.id,
-    },
-    attributes: ["estudianteId", "profesorId", "cursoId"],
-  });
-
-  //Que pro
-
-  const megaQueProXd = await Cita.findAll({
-    where: {
-      estudianteId: estudiante1.dataValues.id,
-    },
-    attributes: [],
-    include: [
-      {
-        model: Estudiante,
-        attributes: ["id"],
-        include: {
-          model: Usuario,
-          attributes: ["nombreUsuario"],
-        },
-      },
-      {
-        model: Profesor,
-        attributes: ["id"],
-        include:{
-            model:Usuario,
-            attributes: ["nombreUsuario"],
-        }
-      },
-      {
-        model: Curso,
-        attributes: ["nombreCurso"],
-      },
-    ],
-  });
-
-  //algo mas realista a lo que deberia responder en este caso:
-  var queProXD = []
-
-  megaQueProXd.forEach(element => {
-    
-    const elemento = {
-        profesor:{
-            idProfesor: element.dataValues.Profesor.id,
-            nombre: element.dataValues.Profesor.Usuario.nombreUsuario,
-        },
-        curso:{
-            nombre: element.dataValues.Curso.nombreCurso
-        },
-        horario:{
-        }
+    if (!cita) {
+      return res.status(404).json({ error: "Cita no encontrada" });
     }
 
-    queProXD.push(elemento)
+    // Elimina el usuario de la base de datos
+    await cita.destroy();
 
-  });
+    res.send({ message: "Cita eliminada correctamente" });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Error al eliminar la cita" });
+  }
+});
 
-  res.send(
-    JSON.stringify({
-      ejem1: citasAlumnoPrueba,
-      ejem2: citasAlumnoPrueba2,
-      ejem3: onlyCitasAlumnos,
-      ejem4: onlyCitasAlumnos2,
-      queProRaw: megaQueProXd,
-      queProBonito: queProXD
-    })
-  );
-});*/
+
+//ACTUALIZAR FOTO DE USUARIO CON BUSQUEDA DE SU ID
+app.post('/update-foto/:usuarioId', async function(req, res) {
+  const usuarioId = req.params.usuarioId;
+  
+  try {
+    const usuario = await Usuario.findOne({
+      where: {
+        id: usuarioId,
+      }
+    });
+
+    if (!usuario) {
+      return res.status(404).json({ error: "Usuario no encontrado" });
+    }
+
+    // Actualiza los valores del usuario
+    
+    usuario.imgPerfil = "Holaa";
+
+    // Guarda los cambios en la base de datos
+    await usuario.save();
+
+    res.send(usuario);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Error al actualizar el usuario" });
+  }
+});
+
+
+/*
+//OBTENER LOS CURSOS DE LOS PROFESORES BUSCANDOLO POR SU ID Y TENIENDO COMO CONDICION SU ROL
+app.get('/obtener-cursos-profesor/:usuarioId', async function(req, res) {
+  const usuarioId = req.params.usuarioId;
+
+  try {
+    const usuario = await Usuario.findOne({
+      where: {
+        id: usuarioId,
+        rol: "1" //profesor es 1
+      }
+    });
+
+    if (!usuario) {
+      return res.status(404).json({ error: "Profesor no encontrado" });
+    }
+
+    const usuCurso = await UsuarioCurso.findAll({
+      where: {
+        usuarioId: usuario.id
+      }
+    });
+
+    const cursoIds = usuCurso.map(uc => uc.cursoId);
+
+    const cursos = await Curso.findAll({
+      where: {
+        id: cursoIds
+      },
+      attributes: ["nombreCurso"]
+    });
+
+    res.send(cursos);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Error al obtener los cursos del profesor" });
+  }
+});
+*/
+
+/*
+//OBTENER LA INFORMACION DEL PROFESOR TENIENDO EN CUENTA SU ID Y QUE TENIENDO COMO CONDICION SU ROL
+app.get('/obtener-profesor/:usuarioId', async function(req, res) {
+  const usuarioId = req.params.usuarioId;
+
+  try {
+    //busca primero profesor y trae sus datos
+    const usuario = await Usuario.findOne({
+      where: {
+        id: usuarioId,
+        rol: "1"
+      },
+      attributes: ["nombres", "correo", "apellidos", "tituloPerfil", "presenPerfil", "imgPerfil"],
+      
+    });
+
+    if (!usuario) {
+      return res.status(404).json({ error: "Profesor no encontrado" });
+    }
+    
+    console.log(usuario); 
+    res.send(usuario);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Error al obtener el profesor" });
+  }
+});
+*/
 
 app.listen(port, function () {
   console.log("Servidor ejecutándose en puerto " + port);
