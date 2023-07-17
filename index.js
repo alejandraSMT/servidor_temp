@@ -187,10 +187,10 @@ app.get("/obtener-datos-universidad/:nombreUsuario", async function (req, res) {
 
 
 
-app.post("/datos-info-personal/:nombreUsuario/:nombres/:apellidos", async function (req, res) {
+app.get("/datos-info-personal/:nombreUsuario/:nombres", async function (req, res) {
   const nombreUsuario = req.params.nombreUsuario;
   const nombres = req.params.nombres;
-  const apellidos = req.params.apellidos;
+  //const apellidos = req.params.apellidos;
   // const { nombreUsuario, nombres, apellidos, tipoDocumento, rol, nroDocumento } = req.body;
 
   const usuarioExistente = await Usuario.findOne({
@@ -198,18 +198,16 @@ app.post("/datos-info-personal/:nombreUsuario/:nombres/:apellidos", async functi
       nombreUsuario: nombreUsuario
     }
   });
-
   usuarioExistente.nombres = nombres;
-  usuarioExistente.apellidos = apellidos;
+  //usuarioExistente.apellidos = apellidos;
   // usuarioExistente.tipoDocumento = tipoDocumento;
   // usuarioExistente.rol = rol;
   // usuarioExistente.nroDocumento = nroDocumento;
-
   await usuarioExistente.save();
-
 
   res.send("usuarioExistente");
 });
+
 
 /*app.get("/prueba", async (req, res) => {
 
