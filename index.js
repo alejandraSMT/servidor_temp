@@ -21,9 +21,12 @@ import { Model, where } from "sequelize";
 
 
 const app = express();
-const port = process.env.PORT || 3005;
+const port = process.env.PORT || 3001;
 
-app.use(cors());
+app.use(cors({
+  origin : "http://localhost:3000",
+  optionsSuccessStatus:200
+}))
 
 app.use(express.json());
 
@@ -40,6 +43,41 @@ async function verificarConexion() {
 app.get("/", function (req, res) {
   res.send("Se conectó correctamente");
   verificarConexion();
+});
+
+app.get('/obtener-profesor-total/:usuarioId', async function(req, res) {
+  const usuarioId = req.params.usuarioId;
+
+  try {
+    const usuario = await Profesor.findOne({
+      where: {
+        usuarioId: usuarioId
+      },
+      include : [
+        {
+          model : Usuario,
+          attributes :  ["id","nombreCompleto", "correo", "apellidos", "tituloPerfil", "presenPerfil", "imgPerfil"],
+          include: {
+            model: UsuarioCurso,
+            include: {
+              model: Curso,
+              attributes: ["nombreCurso"]
+            }
+          }
+        }  
+      ],
+    });
+
+    if (!usuario) {
+      return res.status(404).json({ error: "Profesor no encontrado" });
+    }
+
+    console.log(usuario);
+    res.send(usuario);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Error al obtener el profesor" });
+  }
 });
 
 app.get("/buscar-citas/:usuarioId", async function (req, res) {
@@ -333,8 +371,7 @@ app.get("/principal-citas/:usuarioId", async function (req, res) {
         model: Profesor,
         include: [
           {
-            model: Usuario,
-            attributes: ["id", "nombres", "apellidos", "tituloPerfil"]
+            model: Usuario
           },
         ],
       },
@@ -356,8 +393,7 @@ app.get("/principal-citas/:usuarioId", async function (req, res) {
         model: Estudiante,
         include: [
           {
-            model: Usuario,
-            attributes: ["id", "nombres", "apellidos", "tituloPerfil"]
+            model: Usuario
           },
         ],
       },
@@ -373,24 +409,17 @@ app.get("/principal-citas/:usuarioId", async function (req, res) {
 
     citas.forEach(cita => {
       const elemento = {
-        usuario: {
-          id: usuario.dataValues.id,
-          nombres: usuario.dataValues.nombres,
-          apellidos: usuario.dataValues.apellidos,
-          rol: usuario.dataValues.rol,
-          cita: {
-            id: cita.dataValues.id,
-            dia: cita.dataValues.dia,
-            mes: cita.dataValues.mes,
-            anio: cita.dataValues.anio,
-            hora: cita.dataValues.hora,
-            diaSemana: cita.dataValues.diaSemana,
-            persona: {
-              id: cita.dataValues.Profesor.Usuario.id,
-              nombres: cita.dataValues.Profesor.Usuario.nombres,
-              apellidos: cita.dataValues.Profesor.Usuario.apellidos,
-              tituloPerfil: cita.dataValues.Profesor.Usuario.tituloPerfil
-            }
+        cita: {
+          id: cita.dataValues.id,
+          dia: cita.dataValues.dia,
+          mes: cita.dataValues.mes,
+          anio: cita.dataValues.anio,
+          hora: cita.dataValues.hora,
+          persona: {
+            id: cita.dataValues.Profesor.Usuario.id,
+            nombres: cita.dataValues.Profesor.Usuario.nombres,
+            apellidos: cita.dataValues.Profesor.Usuario.apellidos,
+            imgPerfil: cita.dataValues.Profesor.Usuario.imgPerfil
           }
         }
       }
@@ -399,24 +428,17 @@ app.get("/principal-citas/:usuarioId", async function (req, res) {
   } else if (usuario.dataValues.rol == 1) {
     citas.forEach(cita => {
       const elemento = {
-        usuario: {
-          id: usuario.dataValues.id,
-          nombres: usuario.dataValues.nombres,
-          apellidos: usuario.dataValues.apellidos,
-          rol: usuario.dataValues.rol,
-          cita: {
-            id: cita.dataValues.id,
-            dia: cita.dataValues.dia,
-            mes: cita.dataValues.mes,
-            anio: cita.dataValues.anio,
-            hora: cita.dataValues.hora,
-            diaSemana: cita.dataValues.diaSemana,
-            persona: {
-              id: cita.dataValues.Estudiante.Usuario.id,
-              nombres: cita.dataValues.Estudiante.Usuario.nombres,
-              apellidos: cita.dataValues.Estudiante.Usuario.apellidos,
-              tituloPerfil: cita.dataValues.Estudiante.Usuario.tituloPerfil
-            }
+        cita: {
+          id: cita.dataValues.id,
+          dia: cita.dataValues.dia,
+          mes: cita.dataValues.mes,
+          anio: cita.dataValues.anio,
+          hora: cita.dataValues.hora,
+          persona: {
+            id: cita.dataValues.Estudiante.Usuario.id,
+            nombres: cita.dataValues.Estudiante.Usuario.nombres,
+            apellidos: cita.dataValues.Estudiante.Usuario.apellidos,
+            imgPerfil: cita.dataValues.Profesor.Usuario.imgPerfil
           }
         }
       }
@@ -426,6 +448,18 @@ app.get("/principal-citas/:usuarioId", async function (req, res) {
 
   res.send(citasPrincipal)
 
+})
+
+app.get("/datos-usuario/:usuarioId", async function(req,res){
+
+  const usuarioId = req.params.usuarioId
+
+  const usuario = await Usuario.findOne({
+    where: {
+      id : usuarioId
+    }
+  })
+  res.send(usuario)
 })
 
 // /:dia/:mes/:anio
@@ -525,39 +559,3 @@ app.listen(port, function () {
   console.log("Servidor ejecutándose en puerto " + port);
   verificarConexion();
 });
-
-
-/*app.post("/registrarHorario", async (req, res) => {
-  const body = req.body
-
-  const diaSemana = body.diaSemana
-  var horaInicio = body.horaInicio
-  const horaFin = body.horaFin
-  const enlace = body.enlace
-  const profesorId = body.profesorId
-
-  const numSesiones = horaFin - horaInicio
-
-  for (let index = 0; index < numSesiones; index++) {
-
-    const rangoHorario = await Rangos.findOne({
-      where: {
-        horaInicio: horaInicio
-      }
-    })
-
-    const horarioCreado = await Horario.create({
-      diaSemana: diaSemana,
-      enlaceSesion: enlace,
-      profesorId: profesorId,
-      rangoId: rangoHorario.dataValues.id
-    })
-  }
-
-  res.send(JSON.stringify({
-    diaSemana: diaSemana,
-    horaInicio: horaInicio,
-    horaFin: horaFin,
-  }))
-
-})*/
