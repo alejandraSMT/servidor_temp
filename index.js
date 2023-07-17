@@ -237,3 +237,4 @@ app.listen(port, function () {
   console.log("Servidor ejecutándose en puerto " + port);
   verificarConexion();
 });
+
