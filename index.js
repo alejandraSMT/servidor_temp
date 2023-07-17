@@ -43,19 +43,24 @@ app.get('/obtener-profesor-total/:usuarioId', async function(req, res) {
   const usuarioId = req.params.usuarioId;
 
   try {
-    const usuario = await Usuario.findOne({
+    const usuario = await Profesor.findOne({
       where: {
-        id: usuarioId,
-        rol: "1"
+        usuarioId: usuarioId,
       },
-      attributes: ["nombreCompleto", "correo", "apellidos", "tituloPerfil", "presenPerfil", "imgPerfil"],
-      include: {
-        model: UsuarioCurso,
-        include: {
-          model: Curso,
-          attributes: ["nombreCurso"]
+      include: [
+        {
+          model: Usuario,
+          attributes: ["nombreCompleto", "correo", "apellidos", "tituloPerfil", "presenPerfil", "imgPerfil"],
+          include: {
+            model: UsuarioCurso,
+            include: {
+              model: Curso,
+              attributes: ["nombreCurso"]
+            }
+          }
         }
-      }
+      ],
+      attributes: ["id"]
     });
 
     if (!usuario) {
