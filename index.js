@@ -49,6 +49,168 @@ app.get("/", function (req, res) {
   verificarConexion();
 });
 
+// ENDPOINTS GET
+
+
+
+
+app.get("/obtener-datos-info-personal/:nombreUsuario", async function (req, res) { //para zona superior de perfil
+  const nombreUsuario = req.params.nombreUsuario;
+  const usuario = await Usuario.findOne({
+    where : {
+      nombreUsuario: nombreUsuario
+    },
+    attributes: ['nombres', 'apellidos', 'nroDocumento', 'tipoDocumento', 'rol'], //falta el tipo de documento, hay que definir bien las tablas
+  });
+  if (!usuario) {
+    return res.status(404).json({error: "Usuario no encontrado"});
+  }
+  res.send(usuario);
+})
+
+
+//creo que esto no iria, ya que el usuario deberia ingresar esos datos, no recogerlos del servidor
+app.get("/obtener-datos-usuario/:nombreUsuario", async function (req, res) { //para tab de usuario
+  const nombreUsuario = req.params.nombreUsuario;
+  const usuario = await Usuario.findOne({
+    where : {
+      nombreUsuario: nombreUsuario
+    },
+    attributes: ['nombreUsuario', 'password'],
+  });
+  if (!usuario) {
+    return res.status(404).json({error: "Usuario no encontrado"});
+  }
+  res.send(usuario);
+})
+
+app.get("/obtener-datos-presentacion/:nombreUsuario", async function (req, res) { //para tab de presentacion
+  const nombreUsuario = req.params.nombreUsuario;
+  const usuario = await Usuario.findOne({
+    where : {
+      nombreUsuario: nombreUsuario
+    },
+    attributes: ['tituloPerfil', 'presenPerfil'],
+  });
+  if (!usuario) {
+    return res.status(404).json({error: "Usuario no encontrado"});
+  }
+  res.send(usuario);
+})
+
+app.get("/obtener-universidades", async function (req, res) { //se obtiene la lista de todas las unis
+  const universidades = await Universidad.findAll();
+  res.send(universidades);
+})
+
+app.get("/obtener-carreras-universidad/:UniversidadId", async function (req, res) { //se obtienen las carreras de una universidad mediante el id de la universidad
+  const universidadId = req.params.UniversidadId;
+  const carreras = await UniCarrera.findAll({
+    where : {
+      universidadId: universidadId
+    },
+    attributes: ['carreraId'],
+  });
+  const carreraIds = carreras.map((carrera) => carrera.carreraId);
+  
+  // Realizar una nueva búsqueda en la tabla Carrera utilizando los carreraIds obtenidos
+  const carrerasEncontradas = await Carrera.findAll({
+    where: {
+      id: carreraIds
+    },
+    attributes: ['id', 'nombreCarrera'],
+  });
+
+  res.send(carrerasEncontradas);
+})
+
+app.get("/obtener-cursos-carrera/:carreraId", async function (req, res) { //se obtienen las carreras de una universidad mediante el id de la universidad
+  const carreraId = req.params.carreraId;
+  const cursos = await CarreraCurso.findAll({
+    where : {
+      carreraId: carreraId
+    },
+    attributes: ['cursoId'],
+  });
+  const cursoIds = cursos.map((curso) => curso.cursoId);
+
+  // Realizar una nueva búsqueda en la tabla Carrera utilizando los carreraIds obtenidos
+  const cursosEncontrados = await Curso.findAll({
+    where: {
+      id: cursoIds
+    },
+    attributes: ['id', 'nombreCurso'],
+  });
+
+  res.send(cursosEncontrados);
+})
+
+app.get("/obtener-datos-universidad/:nombreUsuario", async function (req, res) { //para tab de universidad
+  const nombreUsuario = req.params.nombreUsuario;
+  
+  const carreras = await UniCarrera.findOne({
+    where : {
+      universidadId: nombreUsuario
+    },
+    attributes: ['id', 'universidadId', 'carreraId'],
+      include: [
+        // Incluir la información de la universidad y sus carreras
+        {
+          model: Universidad,
+          attributes: ['nombreUniversidad'],
+          include: {
+            model: Carrera,
+            as: 'carreras',
+            attributes: ['nombreCarrera'],
+            include: {
+              model: Curso,
+              as: 'cursos',
+              attributes: ['nombreCurso'],
+            }
+          },
+        },
+      ],
+  });
+  if (!usuario) {
+    return res.status(404).json({error: "Usuario no encontrado"});
+  }
+  res.send(usuario);
+})
+
+
+
+
+
+// ENDPOINTS POST
+
+
+
+
+
+app.post("/datos-info-personal/:nombreUsuario/:nombres/:apellidos", async function (req, res) {
+  const nombreUsuario = req.params.nombreUsuario;
+  const nombres = req.params.nombres;
+  const apellidos = req.params.apellidos;
+  // const { nombreUsuario, nombres, apellidos, tipoDocumento, rol, nroDocumento } = req.body;
+
+  const usuarioExistente = await Usuario.findOne({
+    where : {
+      nombreUsuario: nombreUsuario
+    }
+  });
+
+  usuarioExistente.nombres = nombres;
+  usuarioExistente.apellidos = apellidos;
+  // usuarioExistente.tipoDocumento = tipoDocumento;
+  // usuarioExistente.rol = rol;
+  // usuarioExistente.nroDocumento = nroDocumento;
+
+  await usuarioExistente.save();
+
+
+  res.send("usuarioExistente");
+});
+
 /*app.get("/prueba", async (req, res) => {
 
   const rangos = await Rangos.create({
