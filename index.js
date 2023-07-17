@@ -1,5 +1,3 @@
-console.log("XD");
-
 import { sequelize } from "./database/database.js";
 import express from "express";
 import cors from "cors";
@@ -17,10 +15,15 @@ import { UsuarioCurso } from "./models/UsuarioCurso.js";
 import { Horario } from "./models/Horario.js";
 import { Cita } from "./models/Citas.js";
 
-const app = express();
-const port = process.env.PORT || 3005;
+import { capitalizeFirstLetter } from "./utils/funcionesBienUtiles.js";
 
-app.use(cors());
+const app = express();
+const port = process.env.PORT || 3001;
+
+app.use(cors({
+  origin : "*",
+  optionsSuccessStatus:200
+}))
 
 app.use(express.json());
 
@@ -34,271 +37,117 @@ async function verificarConexion() {
   }
 }
 
-app.get("/create-user", async function (req, res) {
-  const nuevoUsuario = await Usuario.create({
-    nombre: "Pepe",
-    codigo: "20123254",
-    edad: 30,
+app.post("/register", async(req, res) => {
+  const usuario = req.body.user;
+  const correo = req.body.email;
+  const password = req.body.password;
+ 
+  const nombres = capitalizeFirstLetter(req.body.names);
+  const apellidos = capitalizeFirstLetter(req.body.surnames);
+  const nombreCompleto = nombres + " " + apellidos;
+  
+  const tipoDoc = req.body.tdoc;
+  const nroDoc = req.body.ndoc;
+  const rol = req.body.rol;
+
+  const maxIdResultUser = await Usuario.max("id");
+  const nextIdUser = (maxIdResultUser || 0) + 1; // Calcula el próximo ID
+
+  const alreadyRegistered_Name = await Usuario.findAll({
+    where: {
+      nombreUsuario: usuario
+    },
   });
 
-  res.send("Usuario creado.");
+  const alreadyRegistered_Email = await Usuario.findAll({
+    where: {
+      correo: correo
+    },
+  });
+
+  const alreadyRegistered_Doc = await Usuario.findAll({
+    where: {
+      nroDocumento: nroDoc
+    },
+  });
+
+  if (alreadyRegistered_Name == 0 && alreadyRegistered_Email == 0 && alreadyRegistered_Doc == 0){
+    const newUser = Usuario.create({
+      id: nextIdUser,
+      nombreUsuario: usuario,
+      password: password,
+      correo: correo,
+      nombres: nombres,
+      apellidos: apellidos,
+      nombreCompleto: nombreCompleto,
+      nroDocumento: nroDoc,
+      tipoDocumento:tipoDoc,
+      rol: rol
+    });
+
+    if(rol == "0"){
+      const maxIdResultStud = await Estudiante.max("id");
+      const nextIdStud = (maxIdResultStud || 0) + 1; // Calcula el próximo ID
+      
+      const newStudent = Estudiante.create({
+        id: nextIdStud,
+        usuarioId: nextIdUser
+      });
+    }
+    else{
+      const maxIdResultTea = await Profesor.max("id");
+      const nextIdTea = (maxIdResultTea || 0) + 1; // Calcula el próximo ID
+
+      const newTeacher = Profesor.create({
+        id: nextIdTea,
+        usuarioId: nextIdUser
+      });
+    }
+
+    res.send("Usuario creado.")
+  }
+  else{
+    res.send("Usuario ya existente")
+  }
+
+});
+
+app.post("/login", async (req, res) => {
+  const input = req.body.input;
+  const password = req.body.password;
+
+  const userGetByName = await Usuario.findAll({
+    where: {
+      nombreUsuario: input,
+      password: password,
+    },
+  });
+  
+  const userGetByEmail = await Usuario.findAll({
+    where: {
+      correo: input,
+      password: password,
+    },
+  });
+
+  if (userGetByName.length == 0 || userGetByEmail.length == 0) 
+  {
+    res.send({
+      verify: true,
+    });
+  } 
+  else 
+  {
+    res.send({
+      verify: false,
+    });
+  }
 });
 
 app.get("/", function (req, res) {
   res.send("Se conectó correctamente");
   verificarConexion();
 });
-
-/*app.get("/prueba", async (req, res) => {
-
-  const rangos = await Rangos.create({
-    horaInicio : "9:00",
-    horaFin : "10:00",
-  })
-
-  const rangos1 = await Rangos.create({
-    horaInicio : "10:00",
-    horaFin : "11:00"
-  })
-
-  const universidadPrueba = await Universidad.create({
-    nombreUniversidad: "ULIMA",
-  });
-
-  const carreraPrueba = await Carrera.create({
-    nombreCarrera: "Sistemas",
-  });
-
-  const uniCursoPrueba = await UniCarrera.create({
-    carreraId: carreraPrueba.dataValues.id,
-    universidadId: universidadPrueba.dataValues.id,
-  });
-
-  const cursoPrueba = await Curso.create({
-    nombreCurso: "Progra web",
-  });
-
-  const cursoPrueba2 = await Curso.create({
-    nombreCurso: "Progra web2",
-  });
-
-  const carreraCursoPrueba = await CarreraCurso.create({
-    carreraId: carreraPrueba.dataValues.id,
-    cursoId: cursoPrueba.dataValues.id,
-  });
-
-  const carreraCursoPrueba2 = await CarreraCurso.create({
-    carreraId: carreraPrueba.dataValues.id,
-    cursoId: cursoPrueba2.dataValues.id,
-  });
-
-  const usuarioDummyAlumno = await Usuario.create({
-    nombreUsuario: "Jose",
-    password: "123",
-    correo: "xd@xd1",
-    nombres: "Jose",
-    apellidos: "jose",
-    tipoDocumento: "a",
-    nroDocumento: "xd",
-    rol: "Estudiante",
-    carreraId: carreraCursoPrueba.dataValues.id,
-  });
-
-  const usuarioDummyProfesor = await Usuario.create({
-    nombreUsuario: "Hernan",
-    password: "123",
-    correo: "xd@xd3",
-    nombres: "Jose",
-    apellidos: "jose",
-    tipoDocumento: "a",
-    nroDocumento: "xd",
-    rol: "Profesor",
-    carreraId: carreraCursoPrueba.dataValues.id,
-  });
-
-  const usuarioDummyProfesor2 = await Usuario.create({
-    nombreUsuario: "Pablito",
-    password: "123",
-    correo: "xd@xd4",
-    nombres: "Pablo",
-    apellidos: "jose",
-    tipoDocumento: "a",
-    nroDocumento: "xd",
-    rol: "Profesor",
-    carreraId: carreraCursoPrueba.dataValues.id,
-  });
-
-  const profesor1 = await Profesor.create({
-    usuarioId: usuarioDummyProfesor.dataValues.id,
-  });
-
-  const profesor2 = await Profesor.create({
-    usuarioId: usuarioDummyProfesor2.dataValues.id
-  });
-
-  const usuarioCursoEstudiante = await UsuarioCurso.create({
-    usuarioId: usuarioDummyAlumno.dataValues.id,
-    cursoId: cursoPrueba.dataValues.id,
-  });
-
-  const usuarioCursoProfesor = await UsuarioCurso.create({
-    usuarioId: usuarioDummyProfesor.dataValues.id,
-    cursoId: cursoPrueba.dataValues.id,
-  });
-
-  const usuarioCursoProfesor2 = await UsuarioCurso.create({
-    usuarioId: usuarioDummyProfesor2.dataValues.id,
-    cursoId: cursoPrueba.dataValues.id,
-  });
-
-  const estudiante1 = await Estudiante.create({
-    usuarioId: usuarioDummyAlumno.dataValues.id,
-  });
-
-
-  const horario = await Horario.create({
-    diaSemana: "Lunes",
-    horaInicio: "8",
-    horaFin: "10",
-    enlaceSesion: "Zoom",
-  });
-
-  const horariouwu = await Horario.create({
-    diaSemana : "Lunes",
-    horaInicio : "9:00",
-    horaFin :"11:00",
-    rangoId : rangos.dataValues.id,
-    profesorId : profesor1.dataValues.id
-  })
-
-  const horariouwu1 = await Horario.create({
-    diaSemana : "Lunes",
-    horaInicio : "9:00",
-    horaFin :"11:00",
-    rangoId : rangos1.dataValues.id,
-    profesorId : profesor1.dataValues.id
-  })
-
-  const horarioProfe1 = await ProfesorHorario.create({
-    profesorId: profesor1.dataValues.id,
-    horarioId: horario.dataValues.id,
-  });
-
-  const horarioProfe2 = await ProfesorHorario.create({
-    profesorId: profesor2.dataValues.id,
-    horarioId: horario.dataValues.id,
-  });
-
-  const cita1 = await Cita.create({
-    profesorId: profesor1.dataValues.id,
-    estudianteId: estudiante1.dataValues.id,
-    cursoId: cursoPrueba.dataValues.id,
-    rangoId : rangos.dataValues.id
-  });
-
-  const cita2 = await Cita.create({
-    profesorId: profesor2.dataValues.id,
-    estudianteId: estudiante1.dataValues.id,
-    cursoId: cursoPrueba2.dataValues.id,
-  });
-
-  //Esto te devuelve el objeto del estudiante con sus citas
-  const citasAlumnoPrueba = await Estudiante.findAll({
-    where: {
-      id: estudiante1.dataValues.id,
-    },
-    include: Cita,
-  });
-
-  //Hace lo mismo pero con atributos en especifico
-  const citasAlumnoPrueba2 = await Estudiante.findAll({
-    where: {
-      id: estudiante1.dataValues.id,
-    },
-    include: {
-      model: Cita,
-      attributes: ["estudianteId", "profesorId", "cursoId"],
-    },
-  });
-
-  //Devuelve solo las citas dado un id de alumno
-  const onlyCitasAlumnos = await Cita.findAll({
-    where: {
-      estudianteId: estudiante1.dataValues.id,
-    },
-  });
-
-  //Misma vaina pero solo los atributos que tu quieres
-  const onlyCitasAlumnos2 = await Cita.findAll({
-    where: {
-      estudianteId: estudiante1.dataValues.id,
-    },
-    attributes: ["estudianteId", "profesorId", "cursoId"],
-  });
-
-  //Que pro
-
-  const megaQueProXd = await Cita.findAll({
-    where: {
-      estudianteId: estudiante1.dataValues.id,
-    },
-    attributes: [],
-    include: [
-      {
-        model: Estudiante,
-        attributes: ["id"],
-        include: {
-          model: Usuario,
-          attributes: ["nombreUsuario"],
-        },
-      },
-      {
-        model: Profesor,
-        attributes: ["id"],
-        include:{
-            model:Usuario,
-            attributes: ["nombreUsuario"],
-        }
-      },
-      {
-        model: Curso,
-        attributes: ["nombreCurso"],
-      },
-    ],
-  });
-
-  //algo mas realista a lo que deberia responder en este caso:
-  var queProXD = []
-
-  megaQueProXd.forEach(element => {
-    
-    const elemento = {
-        profesor:{
-            idProfesor: element.dataValues.Profesor.id,
-            nombre: element.dataValues.Profesor.Usuario.nombreUsuario,
-        },
-        curso:{
-            nombre: element.dataValues.Curso.nombreCurso
-        },
-        horario:{
-        }
-    }
-
-    queProXD.push(elemento)
-
-  });
-
-  res.send(
-    JSON.stringify({
-      ejem1: citasAlumnoPrueba,
-      ejem2: citasAlumnoPrueba2,
-      ejem3: onlyCitasAlumnos,
-      ejem4: onlyCitasAlumnos2,
-      queProRaw: megaQueProXd,
-      queProBonito: queProXD
-    })
-  );
-});*/
 
 app.listen(port, function () {
   console.log("Servidor ejecutándose en puerto " + port);
