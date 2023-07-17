@@ -3,7 +3,7 @@ console.log("XD");
 import { sequelize } from "./database/database.js";
 import express from "express";
 import cors from "cors";
-
+import {Op} from "sequelize";
 // Importar modelos
 import { Usuario } from "./models/Usuario.js";
 import { Profesor } from "./models/Profesor.js";
@@ -18,7 +18,7 @@ import { Horario } from "./models/Horario.js";
 import { Cita } from "./models/Citas.js";
 
 const app = express();
-const port = process.env.PORT || 3005;
+const port = process.env.PORT || 3001;
 
 app.use(cors());
 
@@ -299,6 +299,105 @@ app.get("/", function (req, res) {
     })
   );
 });*/
+app.put("/modificar-cita/:citaId/:puntaje", async function (req, res) {
+  try {
+    const citaId = parseInt(req.params.citaId);
+    const puntajeLleno = parseInt(req.params.puntaje);
+
+    // Validación de datos
+    if (isNaN(citaId) || isNaN(puntajeLleno)) {
+      return res.status(400).json({ error: "Datos inválidos" });
+    }
+
+    // Verificar si existe la cita
+    const cita = await Cita.findOne({ where: { id: citaId } });
+    if (!cita) {
+      return res.status(404).json({ error: "Cita no encontrada" });
+    }
+
+    // Realizar la actualización
+    await Cita.update({ puntaje: puntajeLleno }, { where: { id: citaId } });
+
+    res.json({ success: true });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Error al modificar la cita" });
+  }
+});
+
+
+app.get("/consultar-cita/:usuarioId", async function(req, res) {
+  const usuarioId = req.params.usuarioId;
+
+  try {
+    const usuario = await Usuario.findOne({
+      where: {
+        id: usuarioId
+      }
+    });
+
+    if (!usuario) {
+      return res.status(404).json({ error: "Usuario no encontrado" });
+    }
+
+    const profesor = await Profesor.findOne({
+      where: {
+        usuarioId: usuario.id
+      }
+    });
+
+    const citas = await Cita.findAll({
+      where: {
+        profesorId: profesor.id,
+        puntaje: {
+          [Op.not]: null
+        }
+      },
+      attributes: ["puntaje", "comentario", "dia", "mes", "anio", "hora", "estudianteId"]
+    });
+
+    const estudiantesIds = citas.map(cita => cita.estudianteId);
+    const estudiantes = await Estudiante.findAll({
+      where: {
+        id: estudiantesIds
+      },
+      attributes: ["id", "usuarioId"]
+    });
+
+    const usuariosIds = estudiantes.map(estudiante => estudiante.usuarioId);
+    const usuariosEstudiantes = await Usuario.findAll({
+      where: {
+        id: usuariosIds
+      },
+      attributes: ["id", "nombreCompleto"]
+    });
+
+    const usuariosEstudiantesMap = usuariosEstudiantes.reduce((map, usuario) => {
+      map[usuario.id] = usuario.nombreCompleto;
+      return map;
+    }, {});
+
+    const citasConNombres = citas.map(cita => ({
+      puntaje: cita.puntaje,
+      comentario: cita.comentario,
+      dia: cita.dia,
+      mes: cita.mes,
+      anio: cita.anio,
+      hora: cita.hora,
+      nombreEstudiante: usuariosEstudiantesMap[estudiantes.find(estudiante => estudiante.id === cita.estudianteId).usuarioId]
+    }));
+
+    const nombreProfesor = usuario.nombreCompleto;
+    const respuesta = {
+      profesor: nombreProfesor,
+      citas: citasConNombres
+    };
+    res.send(respuesta);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Error al obtener las citas del usuario" });
+  }
+});
 
 app.listen(port, function () {
   console.log("Servidor ejecutándose en puerto " + port);
