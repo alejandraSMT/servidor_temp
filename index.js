@@ -2,6 +2,7 @@ import { sequelize } from "./database/database.js";
 import express from "express";
 import cors from "cors";
 
+
 // Importar modelos
 import { Usuario } from "./models/Usuario.js";
 import { Profesor } from "./models/Profesor.js";
@@ -17,6 +18,7 @@ import { Cita } from "./models/Citas.js";
 
 import { capitalizeFirstLetter } from "./utils/funcionesBienUtiles.js";
 
+import { Op } from "sequelize";
 const app = express();
 const port = process.env.PORT || 3001;
 
@@ -53,13 +55,17 @@ app.post("/register", async(req, res) => {
   const maxIdResultUser = await Usuario.max("id");
   const nextIdUser = (maxIdResultUser || 0) + 1; // Calcula el próximo ID
 
-  const alreadyRegistered_Name = await Usuario.findAll({
+  const users = await Usuario.findAll({
     where: {
-      nombreUsuario: usuario
+      [Op.or]: [
+        {nombreUsuario: usuario},
+        {correo: correo},
+        {nroDocumento: nroDoc}
+      ]
     },
   });
 
-  const alreadyRegistered_Email = await Usuario.findAll({
+  /*const alreadyRegistered_Email = await Usuario.findAll({
     where: {
       correo: correo
     },
@@ -69,9 +75,9 @@ app.post("/register", async(req, res) => {
     where: {
       nroDocumento: nroDoc
     },
-  });
+  });*/
 
-  if (alreadyRegistered_Name == 0 && alreadyRegistered_Email == 0 && alreadyRegistered_Doc == 0){
+  if (users,length == 0){
     const newUser = Usuario.create({
       id: nextIdUser,
       nombreUsuario: usuario,
@@ -107,7 +113,7 @@ app.post("/register", async(req, res) => {
     res.send("Usuario creado.")
   }
   else{
-    res.send("Usuario ya existente")
+    res.send("Usuario ya existente.")
   }
 
 });
@@ -116,31 +122,24 @@ app.post("/login", async (req, res) => {
   const input = req.body.input;
   const password = req.body.password;
 
-  const userGetByName = await Usuario.findAll({
+  const user = await Usuario.findOne({
     where: {
-      nombreUsuario: input,
-      password: password,
-    },
-  });
-  
-  const userGetByEmail = await Usuario.findAll({
-    where: {
-      correo: input,
+      [Op.or]: [
+        {nombreUsuario: input},
+        {correo: input}
+      ],
       password: password,
     },
   });
 
-  if (userGetByName.length == 0 || userGetByEmail.length == 0) 
+  if (!user) 
   {
-    res.send({
-      verify: true,
-    });
+    return res.status(404).json({ error: "Usuario no encontrado." });
   } 
   else 
   {
-    res.send({
-      verify: false,
-    });
+    res.send(user);
+    console.log(user);
   }
 });
 
