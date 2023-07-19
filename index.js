@@ -37,6 +37,11 @@ async function verificarConexion() {
   }
 }
 
+app.get("/", function (req, res) {
+  res.send("Se conectó correctamente");
+  verificarConexion();
+});
+
 
 // Obtener la información completa del profesor personal y sus cursos
 app.get('/obtener-profesor-total/:usuarioId', async function(req, res) {
@@ -76,37 +81,7 @@ app.get('/obtener-profesor-total/:usuarioId', async function(req, res) {
 });
 
 
-
-app.get("/", function (req, res) {
-  res.send("Se conectó correctamente");
-  verificarConexion();
-});
-
-/* solo son ejemplo de un endpoint basico
-
-app.get("/obtener-cursos", async (req, res) => {
-  try {
-    const cursos = await Curso.findAll();
-    res.json(cursos);
-  } catch (error) {
-    console.error(error);
-    res.status(500).send("Error al obtener la lista de cursos.");
-  }
-});
-
-app.get("/obtener-usuarios", async(req,res)=>{
-  try{
-    const usuarios = await Usuario.findAll();
-    res.json(usuarios);
-  } catch ( error){
-    console.error(error);
-    res.status(500).send("Error al obtener la lista de usuarios");
-  }
-});
-*/
-
-
-
+//ELIMINAR CITA POR ID
 app.post('/delete-cita/:citaId', async function(req, res) {
   const citaId = req.params.citaId;
 
@@ -120,7 +95,7 @@ app.post('/delete-cita/:citaId', async function(req, res) {
     });
 
     if (!cita) {
-      return res.status(404).json({ error: "Cita no encontrada" });
+      return res.status(404).json({ error: "Cita no disponible para cancelar" });
     }
 
     // Elimina el usuario de la base de datos
@@ -134,107 +109,77 @@ app.post('/delete-cita/:citaId', async function(req, res) {
 });
 
 
-//ACTUALIZAR FOTO DE USUARIO CON BUSQUEDA DE SU ID
+//ACTUALIZAR FOTO DE USUARIO CON BUSQUEDA DE SU ID SUBIENDO FOTO EN BYTES (NO FUNCIONO PERO SE IMPLEMENTO/INTENTO)
+import fs from 'fs';
+
 app.post('/update-foto/:usuarioId', async function(req, res) {
   const usuarioId = req.params.usuarioId;
-  
+
   try {
     const usuario = await Usuario.findOne({
       where: {
         id: usuarioId,
-      }
+      },
     });
 
     if (!usuario) {
-      return res.status(404).json({ error: "Usuario no encontrado" });
+      return res.status(404).json({ error: 'Usuario no encontrado' });
     }
 
-    // Actualiza los valores del usuario
-    
-    usuario.imgPerfil = "Holaa";
+    if (!req.file) {
+      return res.status(400).json({ error: 'No se proporcionó ninguna imagen' });
+    }
 
-    // Guarda los cambios en la base de datos
+    // Leer el archivo de imagen y convertirlo en un búfer de bytes
+    const fotoBuffer = fs.readFileSync(req.file.path);
+
+    // Actualizar los valores del usuario con el búfer de bytes de la imagen
+    usuario.imgPerfil = fotoBuffer;
+
+    // Guardar los cambios en la base de datos
+    await usuario.save();
+
+    // Eliminar el archivo subido temporalmente
+    fs.unlinkSync(req.file.path);
+
+    res.send(usuario);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Error al actualizar el usuario' });
+  }
+});
+
+
+//ACTUALIZAR FOTO DE USUARIO CON BUSQUEDA DE SU ID CON SU URL
+
+app.post('/update-foto2/:usuarioId', async function (req, res) {
+  const usuarioId = req.params.usuarioId;
+  const nuevaFoto = req.body.imagenNueva; // Cambio aquí, ahora usamos req.body en lugar de req.params
+  try {
+    const usuario = await Usuario.findOne({
+      where: {
+        id: usuarioId,
+      },
+    });
+
+    if (!usuario) {
+      return res.status(404).json({ error: 'Usuario no encontrado' });
+    }
+
+    // Actualizar la columna "imgPerfil" con la URL proporcionada
+    usuario.imgPerfil = nuevaFoto;
+
+    // Guardar los cambios en la base de datos
     await usuario.save();
 
     res.send(usuario);
   } catch (error) {
     console.error(error);
-    res.status(500).json({ error: "Error al actualizar el usuario" });
+    res.status(500).json({ error: 'Error al actualizar el usuario' });
   }
 });
-
-
-/*
-//OBTENER LOS CURSOS DE LOS PROFESORES BUSCANDOLO POR SU ID Y TENIENDO COMO CONDICION SU ROL
-app.get('/obtener-cursos-profesor/:usuarioId', async function(req, res) {
-  const usuarioId = req.params.usuarioId;
-
-  try {
-    const usuario = await Usuario.findOne({
-      where: {
-        id: usuarioId,
-        rol: "1" //profesor es 1
-      }
-    });
-
-    if (!usuario) {
-      return res.status(404).json({ error: "Profesor no encontrado" });
-    }
-
-    const usuCurso = await UsuarioCurso.findAll({
-      where: {
-        usuarioId: usuario.id
-      }
-    });
-
-    const cursoIds = usuCurso.map(uc => uc.cursoId);
-
-    const cursos = await Curso.findAll({
-      where: {
-        id: cursoIds
-      },
-      attributes: ["nombreCurso"]
-    });
-
-    res.send(cursos);
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: "Error al obtener los cursos del profesor" });
-  }
-});
-*/
-
-/*
-//OBTENER LA INFORMACION DEL PROFESOR TENIENDO EN CUENTA SU ID Y QUE TENIENDO COMO CONDICION SU ROL
-app.get('/obtener-profesor/:usuarioId', async function(req, res) {
-  const usuarioId = req.params.usuarioId;
-
-  try {
-    //busca primero profesor y trae sus datos
-    const usuario = await Usuario.findOne({
-      where: {
-        id: usuarioId,
-        rol: "1"
-      },
-      attributes: ["nombres", "correo", "apellidos", "tituloPerfil", "presenPerfil", "imgPerfil"],
-      
-    });
-
-    if (!usuario) {
-      return res.status(404).json({ error: "Profesor no encontrado" });
-    }
-    
-    console.log(usuario); 
-    res.send(usuario);
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: "Error al obtener el profesor" });
-  }
-});
-*/
 
 app.listen(port, function () {
   console.log("Servidor ejecutándose en puerto " + port);
   verificarConexion();
 });
-
