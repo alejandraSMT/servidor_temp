@@ -52,15 +52,151 @@ app.get("/", function (req, res) {
 
 // ENDPOINTS GET
 
+//endpoint para modificar la universidad
+app.get("/cambiar-universidad/:usuarioId/:universidadId", async function (req, res) {
+  const usuarioId = req.params.usuarioId;
+  const universidad = req.params.universidadId;
+  const usuarioExistente = await Usuario.findOne({
+    where: {
+      id: usuarioId
+    }
+  });
+  usuarioExistente.universidadId = parseInt(universidad);
+  await usuarioExistente.save();
+  res.send(usuarioExistente);
+})
+
+//endpoint para modificar la carrera
+app.get("/cambiar-carrera/:usuarioId/:carreraId", async function (req, res) {
+  const usuarioId = req.params.usuarioId;
+  const carrera = req.params.carreraId;
+  const usuarioExistente = await Usuario.findOne({
+    where: {
+      id: usuarioId
+    }
+  });
+  usuarioExistente.carreraId = parseInt(carrera);
+  await usuarioExistente.save();
+  res.send(usuarioExistente);
+})
+
+app.post("/cambiar-password/:usuarioId/:cont1/:cont2/:cont3", async function (req, res) {
+  const usuarioId = req.params.usuarioId;
+  const cont1 = req.params.cont1;
+  const cont2 = req.params.cont2;
+  const cont3 = req.params.cont3;
+  const usuarioExistente = await Usuario.findOne({
+    where: {
+      id: usuarioId
+    }
+  });
+  // Verificar si cont1 es igual a usuarioExistente.password
+  if (cont1 === usuarioExistente.password) {
+    // Verificar si cont2 y cont3 son iguales
+    if (cont2 === cont3) {
+      // Si se cumple la condición, establecer usuarioExistente.password a cont2
+      usuarioExistente.password = cont2;
+    } else {
+      // Si cont2 y cont3 no son iguales, enviar un mensaje de error al cliente
+      return res.status(400).send({ error: "cont2 y cont3 deben ser iguales" });
+    }
+  } else {
+    // Si cont1 no es igual a usuarioExistente.password, enviar un mensaje de error al cliente
+    return res.status(400).send("cont1 no coincide con la contraseña actual");
+  }
+  await usuarioExistente.save();
+  res.send(usuarioExistente);
+})
+
+app.post('/cambiar-usuario/:usuarioId/:nombreUsuario', async function (req, res) {
+  const usuarioId = req.params.usuarioId
+  const nombreUsuario = req.params.nombreUsuario
+
+  const usuarioExistente = await Usuario.findOne({
+    where: {
+      id: usuarioId
+    }
+  })
+
+  if (!usuarioExistente) {
+    return res.status(404).json("Usuario no encontrado")
+  }
+
+  usuarioExistente.nombreUsuario = nombreUsuario
+  await usuarioExistente.save()
+  res.send(usuarioExistente)
+
+})
+
+app.post('/cambiar-presentacion/:usuarioId/:tituloPerfil/:presenPerfil', async function (req, res) {
+
+  try {
+    const usuarioId = req.params.usuarioId
+    const tituloPerfil = req.params.tituloPerfil
+    const presenPerfil = req.params.presenPerfil
+
+    const usuarioExistente = await Usuario.findOne({
+      where: {
+        id: usuarioId
+      }
+    })
+
+    if (!usuarioExistente) {
+      return res.status(400).json("Usuario no encontrado")
+    }
+
+    usuarioExistente.tituloPerfil = tituloPerfil
+    usuarioExistente.presenPerfil = presenPerfil
+    await usuarioExistente.save()
+    res.send(usuarioExistente)
+  } catch (e) {
+    console.log(e)
+  }
+
+})
 
 
-//enpoint para colocar la info actual en los campos de informacion personal
+app.post('/update-foto2/:usuarioId', async function (req, res) {
+  const usuarioId = req.params.usuarioId;
+  const nuevaFoto = req.body.imagenNueva; // Cambio aquí, ahora usamos req.body en lugar de req.params
+  try {
+    const usuario = await Usuario.findOne({
+      where: {
+        id: usuarioId,
+      },
+    });
+
+    if (!usuario) {
+      return res.status(404).json('Usuario no encontrado');
+    }
+
+    // Actualizar la columna "imgPerfil" con la URL proporcionada
+    usuario.imgPerfil = nuevaFoto;
+
+    // Guardar los cambios en la base de datos
+    await usuario.save();
+
+    res.send(usuario);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Error al actualizar el usuario' });
+  }
+});
+
 app.get("/obtener-datos-info-personal/:usuarioId", async function (req, res) { //para zona superior de perfil
   const usuarioId = req.params.usuarioId;
   const usuario = await Usuario.findOne({
     where: {
       id: usuarioId
     },
+    include: [
+      {
+        model: Universidad
+      },
+      {
+        model: Carrera
+      }
+    ]
   });
   if (!usuario) {
     return res.status(404).json({ error: "Usuario no encontrado" });
@@ -205,7 +341,6 @@ app.get("/obtener-datos-universidad/:usuarioId", async function (req, res) { //p
   res.send(carreras);
 })
 
-
 //endpoint de andrea
 app.get("/cursos/:universidadId/:carreraId", async (req, res) => {
   const { universidadId, carreraId } = req.params;
@@ -243,7 +378,6 @@ app.get("/cursos/:universidadId/:carreraId", async (req, res) => {
     return res.status(500).json({ message: "Error interno del servidor." });
   }
 });
-
 
 app.get("/obtener-carreras-universidad/:UniversidadId", async function (req, res) { //se obtienen las carreras de una universidad mediante el id de la universidad
   const universidadId = req.params.UniversidadId;
@@ -292,23 +426,19 @@ app.post("/asignar-curso-usuario/:usuarioId/:cursoId", async (req, res) => {
       cursoId: cursoId,
     });
 
-    res.send(nuevaRelacionUsuarioCurso)
-    return res.status(201).json({ message: "Relación UsuarioCurso creada exitosamente." });
+    //res.send(nuevaRelacionUsuarioCurso)
+    return res.status(200).json({
+      message: "Relación UsuarioCurso creada exitosamente.",
+      respuesta: JSON.stringify(nuevaRelacionUsuarioCurso)
+    });
   } catch (error) {
     console.error(error);
     return res.status(500).json({ message: "Error interno del servidor." });
   }
 });
 
-
-
 // ENDPOINTS POST
-
-
-
-
-//para el componente de personal_info
-app.get("/datos-info-personal/:usuarioId/:nombres/:apellidos/:tipodoc/:numero", async function (req, res) {
+app.post("/datos-info-personal/:usuarioId/:nombres/:apellidos/:tipodoc/:numero", async function (req, res) {
   const usuarioId = req.params.usuarioId;
   const nombres = req.params.nombres;
   const apellidos = req.params.apellidos;
@@ -321,6 +451,7 @@ app.get("/datos-info-personal/:usuarioId/:nombres/:apellidos/:tipodoc/:numero", 
       id: usuarioId
     }
   });
+
   usuarioExistente.nombres = nombres;
   usuarioExistente.apellidos = apellidos;
   usuarioExistente.tipoDocumento = tipodoc;
@@ -330,12 +461,11 @@ app.get("/datos-info-personal/:usuarioId/:nombres/:apellidos/:tipodoc/:numero", 
   res.send(usuarioExistente);
 });
 
-//para el tab de presentacion
-app.get("/enviar-datos-presentacion/:usuarioId/:titulo/:presentacion", async function (req, res) { 
+app.get("/enviar-datos-presentacion/:usuarioId/:titulo/:presentacion", async function (req, res) {
   const usuarioId = req.params.usuarioId;
   const titulo = req.params.titulo;
   const presentacion = req.params.presentacion;
-  const usuarioExistente = await Usuario.findOne ({
+  const usuarioExistente = await Usuario.findOne({
     where: {
       id: usuarioId
     }
@@ -345,348 +475,6 @@ app.get("/enviar-datos-presentacion/:usuarioId/:titulo/:presentacion", async fun
   await usuarioExistente.save();
   res.send("usuarioExistente");
 })
-
-//endpoint para modificar la universidad
-app.get("/cambiar-universidad/:usuarioId/:universidadId", async function (req, res) {
-  const usuarioId = req.params.usuarioId;
-  const universidad = req.params.universidadId;
-  const usuarioExistente = await Usuario.findOne ({
-    where: {
-      id: usuarioId
-    }
-  });
-  usuarioExistente.universidadId = parseInt(universidad);
-  await usuarioExistente.save();
-  res.send(usuarioExistente);
-})
-
-//endpoint para modificar la carrera
-app.get("/cambiar-carrera/:usuarioId/:carreraId", async function (req, res) {
-  const usuarioId = req.params.usuarioId;
-  const carrera = req.params.carreraId;
-  const usuarioExistente = await Usuario.findOne ({
-    where: {
-      id: usuarioId
-    }
-  });
-  usuarioExistente.carreraId = parseInt(carrera);
-  await usuarioExistente.save();
-  res.send(usuarioExistente);
-})
-
-//a para el tab de datos
-app.get("/enviar-datos-datos/:usuarioId/:nombreUsuario/:cont1/:cont2/:cont3", async function (req, res) {
-  const usuarioId = req.params.usuarioId;
-  const nombreUsuario = req.params.nombreUsuario;
-  const cont1 = req.params.cont1;
-  const cont2 = req.params.cont2;
-  const cont3 = req.params.cont3;
-  const usuarioExistente = await Usuario.findOne ({
-    where: {
-      id: usuarioId
-    }
-  });
-  //usuarioExistente.nombreUsuario = parseInt(nombreUsuario);
-  // Verificar si cont1 es igual a usuarioExistente.password
-  if (cont1 === usuarioExistente.password) {
-    // Verificar si cont2 y cont3 son iguales
-    if (cont2 === cont3) {
-      // Si se cumple la condición, establecer usuarioExistente.password a cont2
-      usuarioExistente.password = cont2;
-    } else {
-      // Si cont2 y cont3 no son iguales, enviar un mensaje de error al cliente
-      return res.status(400).send("cont2 y cont3 deben ser iguales");
-    }
-  } else {
-    // Si cont1 no es igual a usuarioExistente.password, enviar un mensaje de error al cliente
-    return res.status(400).send("cont1 no coincide con la contraseña actual");
-  }
-  await usuarioExistente.save();
-  res.send(usuarioExistente);
-})
-
-//endpoint frank
-app.post('/update-foto2/:usuarioId', async function (req, res) {
-  const usuarioId = req.params.usuarioId;
-  const nuevaFoto = req.body.imagenNueva; // Cambio aquí, ahora usamos req.body en lugar de req.params
-  try {
-    const usuario = await Usuario.findOne({
-      where: {
-        id: usuarioId,
-      },
-    });
-
-    if (!usuario) {
-      return res.status(404).json({ error: 'Usuario no encontrado' });
-    }
-
-    // Actualizar la columna "imgPerfil" con la URL proporcionada
-    usuario.imgPerfil = nuevaFoto;
-
-    // Guardar los cambios en la base de datos
-    await usuario.save();
-
-    res.send(usuario);
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: 'Error al actualizar el usuario' });
-  }
-});
-
-
-
-
-
-// app.get("/prueba", async (req, res) => {
-
-//   const rangos = await Rangos.create({
-//     horaInicio : "9:00",
-//     horaFin : "10:00",
-//   })
-
-//   const rangos1 = await Rangos.create({
-//     horaInicio : "10:00",
-//     horaFin : "11:00"
-//   })
-
-//   const universidadPrueba = await Universidad.create({
-//     nombreUniversidad: "ULIMA",
-//   });
-
-//   const carreraPrueba = await Carrera.create({
-//     nombreCarrera: "Sistemas",
-//   });
-
-//   const uniCursoPrueba = await UniCarrera.create({
-//     carreraId: carreraPrueba.dataValues.id,
-//     universidadId: universidadPrueba.dataValues.id,
-//   });
-
-//   const cursoPrueba = await Curso.create({
-//     nombreCurso: "Progra web",
-//   });
-
-//   const cursoPrueba2 = await Curso.create({
-//     nombreCurso: "Progra web2",
-//   });
-
-//   const carreraCursoPrueba = await CarreraCurso.create({
-//     carreraId: carreraPrueba.dataValues.id,
-//     cursoId: cursoPrueba.dataValues.id,
-//   });
-
-//   const carreraCursoPrueba2 = await CarreraCurso.create({
-//     carreraId: carreraPrueba.dataValues.id,
-//     cursoId: cursoPrueba2.dataValues.id,
-//   });
-
-//   const usuarioDummyAlumno = await Usuario.create({
-//     nombreUsuario: "Jose",
-//     password: "123",
-//     correo: "xd@xd1",
-//     nombres: "Jose",
-//     apellidos: "jose",
-//     tipoDocumento: "a",
-//     nroDocumento: "xd",
-//     rol: "Estudiante",
-//     carreraId: carreraCursoPrueba.dataValues.id,
-//   });
-
-//   const usuarioDummyProfesor = await Usuario.create({
-//     nombreUsuario: "Hernan",
-//     password: "123",
-//     correo: "xd@xd3",
-//     nombres: "Jose",
-//     apellidos: "jose",
-//     tipoDocumento: "a",
-//     nroDocumento: "xd",
-//     rol: "Profesor",
-//     carreraId: carreraCursoPrueba.dataValues.id,
-//   });
-
-//   const usuarioDummyProfesor2 = await Usuario.create({
-//     nombreUsuario: "Pablito",
-//     password: "123",
-//     correo: "xd@xd4",
-//     nombres: "Pablo",
-//     apellidos: "jose",
-//     tipoDocumento: "a",
-//     nroDocumento: "xd",
-//     rol: "Profesor",
-//     carreraId: carreraCursoPrueba.dataValues.id,
-//   });
-
-//   const profesor1 = await Profesor.create({
-//     usuarioId: usuarioDummyProfesor.dataValues.id,
-//   });
-
-//   const profesor2 = await Profesor.create({
-//     usuarioId: usuarioDummyProfesor2.dataValues.id
-//   });
-
-//   const usuarioCursoEstudiante = await UsuarioCurso.create({
-//     usuarioId: usuarioDummyAlumno.dataValues.id,
-//     cursoId: cursoPrueba.dataValues.id,
-//   });
-
-//   const usuarioCursoProfesor = await UsuarioCurso.create({
-//     usuarioId: usuarioDummyProfesor.dataValues.id,
-//     cursoId: cursoPrueba.dataValues.id,
-//   });
-
-//   const usuarioCursoProfesor2 = await UsuarioCurso.create({
-//     usuarioId: usuarioDummyProfesor2.dataValues.id,
-//     cursoId: cursoPrueba.dataValues.id,
-//   });
-
-//   const estudiante1 = await Estudiante.create({
-//     usuarioId: usuarioDummyAlumno.dataValues.id,
-//   });
-
-
-//   const horario = await Horario.create({
-//     diaSemana: "Lunes",
-//     horaInicio: "8",
-//     horaFin: "10",
-//     enlaceSesion: "Zoom",
-//   });
-
-//   const horariouwu = await Horario.create({
-//     diaSemana : "Lunes",
-//     horaInicio : "9:00",
-//     horaFin :"11:00",
-//     rangoId : rangos.dataValues.id,
-//     profesorId : profesor1.dataValues.id
-//   })
-
-//   const horariouwu1 = await Horario.create({
-//     diaSemana : "Lunes",
-//     horaInicio : "9:00",
-//     horaFin :"11:00",
-//     rangoId : rangos1.dataValues.id,
-//     profesorId : profesor1.dataValues.id
-//   })
-
-//   const horarioProfe1 = await ProfesorHorario.create({
-//     profesorId: profesor1.dataValues.id,
-//     horarioId: horario.dataValues.id,
-//   });
-
-//   const horarioProfe2 = await ProfesorHorario.create({
-//     profesorId: profesor2.dataValues.id,
-//     horarioId: horario.dataValues.id,
-//   });
-
-//   const cita1 = await Cita.create({
-//     profesorId: profesor1.dataValues.id,
-//     estudianteId: estudiante1.dataValues.id,
-//     cursoId: cursoPrueba.dataValues.id,
-//     rangoId : rangos.dataValues.id
-//   });
-
-//   const cita2 = await Cita.create({
-//     profesorId: profesor2.dataValues.id,
-//     estudianteId: estudiante1.dataValues.id,
-//     cursoId: cursoPrueba2.dataValues.id,
-//   });
-
-//   //Esto te devuelve el objeto del estudiante con sus citas
-//   const citasAlumnoPrueba = await Estudiante.findAll({
-//     where: {
-//       id: estudiante1.dataValues.id,
-//     },
-//     include: Cita,
-//   });
-
-//   //Hace lo mismo pero con atributos en especifico
-//   const citasAlumnoPrueba2 = await Estudiante.findAll({
-//     where: {
-//       id: estudiante1.dataValues.id,
-//     },
-//     include: {
-//       model: Cita,
-//       attributes: ["estudianteId", "profesorId", "cursoId"],
-//     },
-//   });
-
-//   //Devuelve solo las citas dado un id de alumno
-//   const onlyCitasAlumnos = await Cita.findAll({
-//     where: {
-//       estudianteId: estudiante1.dataValues.id,
-//     },
-//   });
-
-//   //Misma vaina pero solo los atributos que tu quieres
-//   const onlyCitasAlumnos2 = await Cita.findAll({
-//     where: {
-//       estudianteId: estudiante1.dataValues.id,
-//     },
-//     attributes: ["estudianteId", "profesorId", "cursoId"],
-//   });
-
-//   //Que pro
-
-//   const megaQueProXd = await Cita.findAll({
-//     where: {
-//       estudianteId: estudiante1.dataValues.id,
-//     },
-//     attributes: [],
-//     include: [
-//       {
-//         model: Estudiante,
-//         attributes: ["id"],
-//         include: {
-//           model: Usuario,
-//           attributes: ["nombreUsuario"],
-//         },
-//       },
-//       {
-//         model: Profesor,
-//         attributes: ["id"],
-//         include:{
-//             model:Usuario,
-//             attributes: ["nombreUsuario"],
-//         }
-//       },
-//       {
-//         model: Curso,
-//         attributes: ["nombreCurso"],
-//       },
-//     ],
-//   });
-
-//   //algo mas realista a lo que deberia responder en este caso:
-//   var queProXD = []
-
-//   megaQueProXd.forEach(element => {
-
-//     const elemento = {
-//         profesor:{
-//             idProfesor: element.dataValues.Profesor.id,
-//             nombre: element.dataValues.Profesor.Usuario.nombreUsuario,
-//         },
-//         curso:{
-//             nombre: element.dataValues.Curso.nombreCurso
-//         },
-//         horario:{
-//         }
-//     }
-
-//     queProXD.push(elemento)
-
-//   });
-
-//   res.send(
-//     JSON.stringify({
-//       ejem1: citasAlumnoPrueba,
-//       ejem2: citasAlumnoPrueba2,
-//       ejem3: onlyCitasAlumnos,
-//       ejem4: onlyCitasAlumnos2,
-//       queProRaw: megaQueProXd,
-//       queProBonito: queProXD
-//     })
-//   );
-// });
 
 app.listen(port, function () {
   console.log("Servidor ejecutándose en puerto " + port);
