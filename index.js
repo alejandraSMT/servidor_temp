@@ -304,3 +304,171 @@ app.listen(port, function () {
   console.log("Servidor ejecutándose en puerto " + port);
   verificarConexion();
 });
+app.get("/profesores/horario/:diaSemana", async (req, res) => {
+  const diaSemana = req.params.diaSemana;
+
+  try {
+    const horarios = await Horario.findAll({
+      where: {
+        diaSemana: diaSemana,
+      },
+      include: [
+        {
+          model: Profesor,
+          attributes:["usuarioId"],
+          include: [
+            {
+              model: Usuario,
+              attributes: ["nombreCompleto"],
+              include: [
+                {
+                  model: Universidad,
+                  attributes: ["nombreUniversidad"],
+                },
+                {
+                  model: Carrera,
+                  attributes: ["nombreCarrera"],
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    });
+
+    if (horarios.length === 0) {
+      return res.status(404).send({
+        message: "No se encontraron profesores con horario en el día de la semana proporcionado.",
+      });
+    }
+
+    const profesoresFormatted = horarios.map((horario) => ({
+      usuarioId: horario.Profesor.usuarioId,
+      nombreCompleto: horario.Profesor.Usuario.nombreCompleto,
+      nombreUniversidad: horario.Profesor.Usuario.Universidad.nombreUniversidad,
+      nombreCarrera: horario.Profesor.Usuario.Carrera.nombreCarrera,
+    }));
+
+    res.send(profesoresFormatted);
+  } catch (error) {
+    console.error(error);
+    res.status(500).send("Error interno del servidor");
+  }
+});
+
+
+
+app.get("/usuarios/:parametro", async (req, res) => {
+  let parametro = req.params.parametro;
+  
+  // Si el parámetro tiene espacios, se reemplazan por "%20"
+  parametro = parametro.replace(/\s/g, "%20");
+
+  try {
+    const profesores = await Usuario.findAll({
+      where: {
+        nombres: parametro,
+        rol: 1,
+      },
+      include: [
+        {
+          model: Universidad,
+          attributes: ["nombreUniversidad"],
+        },
+        {
+          model: Carrera,
+          attributes: ["nombreCarrera"],
+        },
+      ],
+    });
+
+    if (profesores.length > 0) {
+      const profesoresFormatted = profesores.map((profesor) => ({
+        usuarioId: profesor.id,
+        nombreCompleto: profesor.nombreCompleto,
+        nombreUniversidad: profesor.Universidad.nombreUniversidad,
+        nombreCarrera: profesor.Carrera.nombreCarrera,
+      }));
+
+      return res.send(profesoresFormatted);
+    }
+
+    const universidad = await Universidad.findOne({
+      where: {
+        nombreUniversidad: parametro,
+      },
+    });
+
+    if (universidad) {
+      const usuarios = await Usuario.findAll({
+        where: {
+          rol: 1,
+          universidadId: universidad.id,
+        },
+        include: [
+          {
+            model: Universidad,
+            attributes: ["nombreUniversidad"],
+          },
+          {
+            model: Carrera,
+            attributes: ["nombreCarrera"],
+          },
+        ],
+      });
+
+      const usuariosFormatted = usuarios.map((usuario) => ({
+        usuarioId: usuario.id,
+        nombreCompleto: usuario.nombreCompleto,
+        nombreUniversidad: usuario.Universidad.nombreUniversidad,
+        nombreCarrera: usuario.Carrera.nombreCarrera,
+      }));
+
+      return res.send(usuariosFormatted);
+    }
+
+    const carrera = await Carrera.findOne({
+      where: {
+        nombreCarrera: parametro,
+      },
+    });
+
+    if (carrera) {
+      const usuarios = await Usuario.findAll({
+        where: {
+          rol: 1,
+          carreraId: carrera.id,
+        },
+        include: [
+          {
+            model: Universidad,
+            attributes: ["nombreUniversidad"],
+          },
+          {
+            model: Carrera,
+            attributes: ["nombreCarrera"],
+          },
+        ],
+      });
+
+      const usuariosFormatted = usuarios.map((usuario) => ({
+        usuarioId: usuario.id,
+        nombreCompleto: usuario.nombreCompleto,
+        nombreUniversidad: usuario.Universidad.nombreUniversidad,
+        nombreCarrera: usuario.Carrera.nombreCarrera,
+      }));
+
+      return res.send(usuariosFormatted);
+    }
+
+    // No se encontró coincidencia
+    return res.status(404).send({
+      message: "No se encontró ninguna coincidencia con el parámetro proporcionado.",
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).send("Error interno del servidor");
+  }
+});
+
+
