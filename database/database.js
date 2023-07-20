@@ -1,7 +1,7 @@
 import { Sequelize } from "sequelize";
 
 // cambiar 1234 por postgres en su caso
-export const sequelize = new Sequelize("pwg5", "postgres", "1234", {
+export const sequelize = new Sequelize("postgres", "postgres", "postgres", {
     host: "localhost",
     dialect: "postgres"
 })

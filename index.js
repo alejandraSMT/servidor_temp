@@ -1,5 +1,3 @@
-console.log("XD");
-
 import { sequelize } from "./database/database.js";
 import express from "express";
 import cors from "cors";
@@ -49,256 +47,346 @@ app.get("/", function (req, res) {
   verificarConexion();
 });
 
-/*app.get("/prueba", async (req, res) => {
+// Endpoint to retrieve all horarios, FALTA IMPLEMENTAR EN LA VISTA=----------------------------------------
+app.get("/horarios", async (req, res) => {
+  try {
+    const horarios = await Horario.findAll({
+      include: [Profesor],
+    });
+    const horariosData = horarios.map((horario) => ({
+      id: horario.id,
+      diaSemana: horario.diaSemana,
+      horaInicio: horario.horaInicio,
+      horaFin: horario.horaFin,
+      enlaceSesion: horario.enlaceSesion,
+    }));
 
-  const rangos = await Rangos.create({
-    horaInicio : "9:00",
-    horaFin : "10:00",
-  })
+    res.send(horariosData);
+    console.log(horariosData);
+  } catch (error) {
+    res.status(500).json({ error: "Failed to retrieve horarios" });
+  }
+});
 
-  const rangos1 = await Rangos.create({
-    horaInicio : "10:00",
-    horaFin : "11:00"
-  })
+//Endpoint para agregar un nuevo Horario.
+//Apartir de este se puede aramar para eliminar uno de la base de datos
 
-  const universidadPrueba = await Universidad.create({
-    nombreUniversidad: "ULIMA",
-  });
-
-  const carreraPrueba = await Carrera.create({
-    nombreCarrera: "Sistemas",
-  });
-
-  const uniCursoPrueba = await UniCarrera.create({
-    carreraId: carreraPrueba.dataValues.id,
-    universidadId: universidadPrueba.dataValues.id,
-  });
-
-  const cursoPrueba = await Curso.create({
-    nombreCurso: "Progra web",
-  });
-
-  const cursoPrueba2 = await Curso.create({
-    nombreCurso: "Progra web2",
-  });
-
-  const carreraCursoPrueba = await CarreraCurso.create({
-    carreraId: carreraPrueba.dataValues.id,
-    cursoId: cursoPrueba.dataValues.id,
-  });
-
-  const carreraCursoPrueba2 = await CarreraCurso.create({
-    carreraId: carreraPrueba.dataValues.id,
-    cursoId: cursoPrueba2.dataValues.id,
-  });
-
-  const usuarioDummyAlumno = await Usuario.create({
-    nombreUsuario: "Jose",
-    password: "123",
-    correo: "xd@xd1",
-    nombres: "Jose",
-    apellidos: "jose",
-    tipoDocumento: "a",
-    nroDocumento: "xd",
-    rol: "Estudiante",
-    carreraId: carreraCursoPrueba.dataValues.id,
-  });
-
-  const usuarioDummyProfesor = await Usuario.create({
-    nombreUsuario: "Hernan",
-    password: "123",
-    correo: "xd@xd3",
-    nombres: "Jose",
-    apellidos: "jose",
-    tipoDocumento: "a",
-    nroDocumento: "xd",
-    rol: "Profesor",
-    carreraId: carreraCursoPrueba.dataValues.id,
-  });
-
-  const usuarioDummyProfesor2 = await Usuario.create({
-    nombreUsuario: "Pablito",
-    password: "123",
-    correo: "xd@xd4",
-    nombres: "Pablo",
-    apellidos: "jose",
-    tipoDocumento: "a",
-    nroDocumento: "xd",
-    rol: "Profesor",
-    carreraId: carreraCursoPrueba.dataValues.id,
-  });
-
-  const profesor1 = await Profesor.create({
-    usuarioId: usuarioDummyProfesor.dataValues.id,
-  });
-
-  const profesor2 = await Profesor.create({
-    usuarioId: usuarioDummyProfesor2.dataValues.id
-  });
-
-  const usuarioCursoEstudiante = await UsuarioCurso.create({
-    usuarioId: usuarioDummyAlumno.dataValues.id,
-    cursoId: cursoPrueba.dataValues.id,
-  });
-
-  const usuarioCursoProfesor = await UsuarioCurso.create({
-    usuarioId: usuarioDummyProfesor.dataValues.id,
-    cursoId: cursoPrueba.dataValues.id,
-  });
-
-  const usuarioCursoProfesor2 = await UsuarioCurso.create({
-    usuarioId: usuarioDummyProfesor2.dataValues.id,
-    cursoId: cursoPrueba.dataValues.id,
-  });
-
-  const estudiante1 = await Estudiante.create({
-    usuarioId: usuarioDummyAlumno.dataValues.id,
-  });
-
-
-  const horario = await Horario.create({
-    diaSemana: "Lunes",
-    horaInicio: "8",
-    horaFin: "10",
-    enlaceSesion: "Zoom",
-  });
-
-  const horariouwu = await Horario.create({
-    diaSemana : "Lunes",
-    horaInicio : "9:00",
-    horaFin :"11:00",
-    rangoId : rangos.dataValues.id,
-    profesorId : profesor1.dataValues.id
-  })
-
-  const horariouwu1 = await Horario.create({
-    diaSemana : "Lunes",
-    horaInicio : "9:00",
-    horaFin :"11:00",
-    rangoId : rangos1.dataValues.id,
-    profesorId : profesor1.dataValues.id
-  })
-
-  const horarioProfe1 = await ProfesorHorario.create({
-    profesorId: profesor1.dataValues.id,
-    horarioId: horario.dataValues.id,
-  });
-
-  const horarioProfe2 = await ProfesorHorario.create({
-    profesorId: profesor2.dataValues.id,
-    horarioId: horario.dataValues.id,
-  });
-
-  const cita1 = await Cita.create({
-    profesorId: profesor1.dataValues.id,
-    estudianteId: estudiante1.dataValues.id,
-    cursoId: cursoPrueba.dataValues.id,
-    rangoId : rangos.dataValues.id
-  });
-
-  const cita2 = await Cita.create({
-    profesorId: profesor2.dataValues.id,
-    estudianteId: estudiante1.dataValues.id,
-    cursoId: cursoPrueba2.dataValues.id,
-  });
-
-  //Esto te devuelve el objeto del estudiante con sus citas
-  const citasAlumnoPrueba = await Estudiante.findAll({
-    where: {
-      id: estudiante1.dataValues.id,
-    },
-    include: Cita,
-  });
-
-  //Hace lo mismo pero con atributos en especifico
-  const citasAlumnoPrueba2 = await Estudiante.findAll({
-    where: {
-      id: estudiante1.dataValues.id,
-    },
-    include: {
-      model: Cita,
-      attributes: ["estudianteId", "profesorId", "cursoId"],
-    },
-  });
-
-  //Devuelve solo las citas dado un id de alumno
-  const onlyCitasAlumnos = await Cita.findAll({
-    where: {
-      estudianteId: estudiante1.dataValues.id,
-    },
-  });
-
-  //Misma vaina pero solo los atributos que tu quieres
-  const onlyCitasAlumnos2 = await Cita.findAll({
-    where: {
-      estudianteId: estudiante1.dataValues.id,
-    },
-    attributes: ["estudianteId", "profesorId", "cursoId"],
-  });
-
-  //Que pro
-
-  const megaQueProXd = await Cita.findAll({
-    where: {
-      estudianteId: estudiante1.dataValues.id,
-    },
-    attributes: [],
-    include: [
-      {
-        model: Estudiante,
-        attributes: ["id"],
-        include: {
-          model: Usuario,
-          attributes: ["nombreUsuario"],
-        },
-      },
-      {
-        model: Profesor,
-        attributes: ["id"],
-        include:{
-            model:Usuario,
-            attributes: ["nombreUsuario"],
-        }
-      },
-      {
-        model: Curso,
-        attributes: ["nombreCurso"],
-      },
-    ],
-  });
-
-  //algo mas realista a lo que deberia responder en este caso:
-  var queProXD = []
-
-  megaQueProXd.forEach(element => {
-    
-    const elemento = {
-        profesor:{
-            idProfesor: element.dataValues.Profesor.id,
-            nombre: element.dataValues.Profesor.Usuario.nombreUsuario,
-        },
-        curso:{
-            nombre: element.dataValues.Curso.nombreCurso
-        },
-        horario:{
-        }
+app.get("/horarios/:diaSemana/:horaInicio/:horaFin/:enlaceSesion",
+  async (req, res) => {
+    try {
+      const diaSemana = req.params.diaSemana;
+      const horaInicio = req.params.horaInicio;
+      const horaFin = req.params.horaFin;
+      const enlaceSesion = req.params.enlaceSesion;
+      const horario = await Horario.create({
+        diaSemana: diaSemana,
+        horaInicio: horaInicio,
+        horaFin: horaFin,
+        enlaceSesion: enlaceSesion,
+      });
+      res.send(horario);
+      console.log(horario);
+    } catch (error) {
+      res.json({ error: "No se pudo agregar el horario" });
     }
+  }
+);
 
-    queProXD.push(elemento)
+//Al presionar el boton X de la columna de Horarios, se debe enviar esta peticion
+app.get("/remover-horario/:idHorario",
+  async (req, res) => {
+    try {
+      const id = req.params.idHorario;
+      const deletedRows = await Horario.destroy({
+        where: {
+          id: id,
+        },
+      });
+      if (deletedRows > 0) {
+        res.send("Horario Eliminado")
+        res.status(200).json({ message: 'Horario deleted successfully' });
+      } else {
+        res.status(404).json({ message: 'Horario not found' });
+      }
+    } catch (error) {
+      res.status(500).json({ error: 'Failed to delete the horario' });
+    }
+  }
+);
 
-  });
 
-  res.send(
-    JSON.stringify({
-      ejem1: citasAlumnoPrueba,
-      ejem2: citasAlumnoPrueba2,
-      ejem3: onlyCitasAlumnos,
-      ejem4: onlyCitasAlumnos2,
-      queProRaw: megaQueProXd,
-      queProBonito: queProXD
+
+
+
+
+
+
+
+
+app.get("/buscar-citas/:usuarioId", async function (req, res) {
+  const usuarioId = req.params.usuarioId
+
+  let usuario = null
+  usuario = await Usuario.findOne({
+    where: {
+      id: usuarioId
+    },
+  })
+
+  var seleccionado = null
+  if (usuario.dataValues.rol == 0) {
+    seleccionado = await Estudiante.findOne({
+      where: {
+        usuarioId: usuario.dataValues.id
+      }
     })
-  );
-});*/
+  } else {
+    seleccionado = await Profesor.findOne({
+      where: {
+        usuarioId: usuario.dataValues.id
+      }
+    })
+  }
+
+  var citas = null
+  if (usuario.dataValues.rol == 0) {
+    citas = await Cita.findAll({
+      where: {
+        estudianteId: seleccionado.id,
+        status: 0
+      },
+      include : [
+        {
+          model : Profesor,
+          include : [
+            {
+              model: Usuario,
+              attributes: ["id", "nombres", "apellidos", "imgPerfil", "tituloPerfil"]
+            },
+          ]
+        },
+        {
+          model : Curso
+        }
+      ]
+    })
+  } else {
+    citas = await Cita.findAll({
+      where: {
+        profesorId: seleccionado.id,
+        status: 0
+      },
+      include : [
+        {
+          model : Estudiante,
+          include : [
+            {
+              model: Usuario,
+              attributes: ["id", "nombres", "apellidos", "imgPerfil", "tituloPerfil"]
+            }
+          ]
+        },
+        {
+          model : Curso
+        },
+      ]
+    })
+  }
+
+  var citasMostrar = []
+
+  if (usuario.dataValues.rol == 0) { //Para Estudiante
+    citas.forEach(cita => 
+      {
+      const elemento = {
+        cita: {
+          id : cita.dataValues.id,
+          dia: cita.dataValues.dia,
+          mes: cita.dataValues.mes,
+          anio: cita.dataValues.anio,
+          diaSemana: cita.dataValues.diaSemana,
+          hora: cita.dataValues.hora,
+          status: cita.dataValues.status,
+          nombreCurso: cita.dataValues.Curso.nombreCurso,
+          calificacion: cita.dataValues.puntaje,
+          persona: {
+            id: cita.dataValues.Profesor.Usuario.id,
+            nombres: cita.dataValues.Profesor.Usuario.nombres,
+            apellidos: cita.dataValues.Profesor.Usuario.apellidos,
+            imgPerfil: cita.dataValues.Profesor.Usuario.imgPerfil,
+            tituloPerfil: cita.dataValues.Profesor.Usuario.tituloPerfil,
+          }
+        }
+      }
+      // si calificado es null, poner No calificado y que se pueda calificar, sino desactivar el botón y cuando califique pintar el puntaje
+      citasMostrar.push(elemento)
+    })
+  } else {  //Para profesor
+    citas.forEach(cita => {
+      const elemento = {
+        cita: {
+          id : cita.dataValues.id,
+          dia: cita.dataValues.dia,
+          mes: cita.dataValues.mes,
+          anio: cita.dataValues.anio,
+          diaSemana: cita.dataValues.diaSemana,
+          hora: cita.dataValues.hora,
+          status: cita.dataValues.status,
+          nombreCurso: cita.dataValues.Curso.nombreCurso,
+          calificacion: cita.dataValues.puntaje,
+          persona: {
+            id: cita.dataValues.Estudiante.Usuario.id,
+            nombres: cita.dataValues.Estudiante.dataValues.Usuario.nombres,
+            apellidos: cita.dataValues.Estudiante.Usuario.apellidos,
+            imgPerfil: cita.dataValues.Estudiante.Usuario.imgPerfil,
+            tituloPerfil: cita.dataValues.Estudiante.Usuario.tituloPerfil,
+          }
+        }
+      }
+      // si calificado es null, poner No calificado y que se pueda calificar, sino desactivar el botón y cuando califique pintar el puntaje
+      citasMostrar.push(elemento)
+    })
+  }
+  res.send(citasMostrar)
+})
+
+
+
+app.get("/citas-pasadas/:usuarioId", async function (req, res) {
+  const usuarioId = req.params.usuarioId
+
+  let usuario = null
+  usuario = await Usuario.findOne({
+    where: {
+      id: usuarioId
+    },
+  })
+
+  var seleccionado = null
+  if (usuario.dataValues.rol == 0) {
+    seleccionado = await Estudiante.findOne({
+      where: {
+        usuarioId: usuario.dataValues.id
+      }
+    })
+  } else {
+    seleccionado = await Profesor.findOne({
+      where: {
+        usuarioId: usuario.dataValues.id
+      }
+    })
+  }
+
+  var citas = null
+  if (usuario.dataValues.rol == 0) {
+    citas = await Cita.findAll({
+      where: {
+        estudianteId: seleccionado.id,
+        status: 1
+      },
+      include : [
+        {
+          model : Profesor,
+          include : [
+            {
+              model: Usuario,
+              attributes: ["id", "nombres", "apellidos", "imgPerfil", "tituloPerfil"]
+            }
+          ]
+        },
+        {
+          model : Curso
+        }
+      ]
+    })
+  } else if(usuario.dataValues.rol == 1) {
+    citas = await Cita.findAll({
+      where: {
+        profesorId: seleccionado.id,
+        status: 1
+      },
+      include : [
+        {
+          model : Estudiante,
+          include : [
+            {
+              model: Usuario,
+              attributes: ["id", "nombres", "apellidos", "imgPerfil", "tituloPerfil"]
+            }
+          ]
+        },
+        {
+          model : Curso
+        }
+      ]
+    })
+  }
+
+  var citasMostrar = []
+
+  if (usuario.dataValues.rol == 0) {
+    citas.forEach(cita => {
+      const elemento = {
+        usuario: {
+          id: usuario.dataValues.id,
+          nombres: usuario.dataValues.nombres,
+          apellidos: usuario.dataValues.apellidos,
+          cita: {
+            id: cita.dataValues.id,
+            dia: cita.dataValues.dia,
+            mes: cita.dataValues.mes,
+            anio: cita.dataValues.anio,
+            diaSemana: cita.dataValues.diaSemana,
+            hora: cita.dataValues.hora,
+            status: cita.dataValues.status,
+            nombreCurso: cita.dataValues.Curso.nombreCurso,
+            calificacion: cita.dataValues.puntaje,
+            persona: {
+              id: cita.dataValues.Profesor.Usuario.id,
+              nombres: cita.dataValues.Profesor.Usuario.nombres,
+              apellidos: cita.dataValues.Profesor.Usuario.apellidos,
+              imgPerfil: cita.dataValues.Profesor.Usuario.imgPerfil,
+              tituloPerfil: cita.dataValues.Profesor.Usuario.tituloPerfil,
+            }
+          }
+        }
+      }
+      // si calificado es null, poner No calificado y que se pueda calificar, sino desactivar el botón y cuando califique pintar el puntaje
+      citasMostrar.push(elemento)
+    })
+  } else {
+    citas.forEach(cita => {
+      const elemento = {
+        usuario: {
+          id: usuario.dataValues.id,
+          nombres: usuario.dataValues.nombres,
+          apellidos: usuario.dataValues.apellidos,
+          cita: {
+            id: cita.dataValues.id,
+            dia: cita.dataValues.dia,
+            mes: cita.dataValues.mes,
+            anio: cita.dataValues.anio,
+            diaSemana: cita.dataValues.diaSemana,
+            hora: cita.dataValues.hora,
+            status: cita.dataValues.status,
+            nombreCurso: cita.dataValues.Curso.nombreCurso,
+            calificacion: cita.dataValues.puntaje,
+            persona: {
+              id: cita.dataValues.Estudiante.Usuario.id,
+              nombres: cita.dataValues.Estudiante.Usuario.nombres,
+              apellidos: cita.dataValues.Estudiante.Usuario.apellidos,
+              imgPerfil: cita.dataValues.Estudiante.Usuario.imgPerfil,
+              tituloPerfil: cita.dataValues.Estudiante.Usuario.tituloPerfil,
+            }
+          }
+        }
+      }
+      // si calificado es null, poner No calificado y que se pueda calificar, sino desactivar el botón y cuando califique pintar el puntaje
+      citasMostrar.push(elemento)
+    })
+  }
+  res.send(citasMostrar)
+})
 
 app.listen(port, function () {
   console.log("Servidor ejecutándose en puerto " + port);

@@ -25,5 +25,3 @@ Usuario .hasMany(Profesor, {
     foreignKey: "usuarioId",
     targetKey: "id"
 })
-
-

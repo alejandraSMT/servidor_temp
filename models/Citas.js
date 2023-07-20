@@ -86,4 +86,3 @@ Carrera .hasMany(Cita,{
     foreignKey : "carreraId",
     sourceKey : "id"
 })
-
